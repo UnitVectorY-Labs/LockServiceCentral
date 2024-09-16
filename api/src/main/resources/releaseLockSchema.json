@@ -1,0 +1,12 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "ReleaseLockRequest",
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "instanceId": {
+        "type": "string"
+      }
+    },
+    "required": ["instanceId"]
+  } 
