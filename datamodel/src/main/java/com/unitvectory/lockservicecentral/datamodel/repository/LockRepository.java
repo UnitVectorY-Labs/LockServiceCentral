@@ -23,26 +23,38 @@ import com.unitvectory.lockservicecentral.datamodel.model.Lock;
 public interface LockRepository {
 
     /**
+     * Get a lock.
+     * 
+     * @param namespace the namespace
+     * @param lockName  the lock name
+     * @return the lock
+     */
+    Lock getLock(String namespace, String lockName);
+
+    /**
      * Acquire a lock.
      * 
      * @param lock the lock request
+     * @param now  the current time
      * @return the lock response
      */
-    Lock acquireLock(Lock lock);
+    Lock acquireLock(Lock lock, long now);
 
     /**
      * Renew a lock.
      * 
      * @param lock the lock request
+     * @param now  the current time
      * @return the lock response
      */
-    Lock renewLock(Lock lock);
+    Lock renewLock(Lock lock, long now);
 
     /**
      * Release a lock.
      * 
      * @param lock the lock request
+     * @param now  the current time
      * @return the lock response
      */
-    Lock releaseLock(Lock lock);
+    Lock releaseLock(Lock lock, long now);
 }

@@ -33,7 +33,7 @@ public class DatamodelGcpFirestoreConfig {
 	@Value("${google.cloud.project}")
 	private String projectId;
 
-	@Value("${sac.datamodel.firestore.database:(default)}")
+	@Value("${datamodel.firestore.database:(default)}")
 	private String firestoreDatabase;
 
 	@Bean

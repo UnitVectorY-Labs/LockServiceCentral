@@ -13,6 +13,10 @@
  */
 package com.unitvectory.lockservicecentral.datamodel.model;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import lombok.Data;
@@ -25,6 +29,9 @@ import lombok.Data;
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Lock {
+
+    @JsonIgnore
+    private LockAction action;
 
     private Boolean success;
 
@@ -39,5 +46,58 @@ public class Lock {
     private Long leaseDuration;
 
     private Long expiry;
+
+    public Map<String, Object> toMap() {
+        Map<String, Object> map = new HashMap<>();
+        map.put("namespace", this.namespace);
+        map.put("lockName", this.lockName);
+        map.put("owner", this.owner);
+        map.put("instanceId", this.instanceId);
+        map.put("leaseDuration", this.leaseDuration);
+        map.put("expiry", this.expiry);
+        return map;
+    }
+
+    public void setFailed() {
+        this.action = LockAction.FAILED;
+        this.success = false;
+        this.owner = null;
+        this.instanceId = null;
+        this.leaseDuration = null;
+        this.expiry = null;
+    }
+
+    public void setSuccess() {
+        this.action = LockAction.SUCCESS;
+        this.success = true;
+    }
+
+    public void setCleared() {
+        this.action = LockAction.SUCCESS;
+        this.success = true;
+        this.owner = null;
+        this.instanceId = null;
+        this.leaseDuration = null;
+        this.expiry = null;
+    }
+
+    public boolean isActive(long now) {
+        return this.expiry == null || this.expiry >= now;
+    }
+
+    public boolean isExpired(long now) {
+        return this.expiry != null && this.expiry < now;
+    }
+
+    public boolean isMatch(Lock lock) {
+        if (lock == null) {
+            return false;
+        }
+
+        return (this.namespace == null || this.namespace.equals(lock.namespace)) &&
+                (this.lockName == null || this.lockName.equals(lock.lockName)) &&
+                (this.owner == null || this.owner.equals(lock.owner)) &&
+                (this.instanceId == null || this.instanceId.equals(lock.instanceId));
+    }
 
 }

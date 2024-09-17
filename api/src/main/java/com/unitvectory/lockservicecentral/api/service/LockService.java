@@ -13,10 +13,13 @@
  */
 package com.unitvectory.lockservicecentral.api.service;
 
+import java.time.Instant;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.unitvectory.lockservicecentral.datamodel.model.Lock;
+import com.unitvectory.lockservicecentral.datamodel.model.LockAction;
 import com.unitvectory.lockservicecentral.datamodel.repository.LockRepository;
 
 /**
@@ -37,7 +40,14 @@ public class LockService {
      * @return the lock response
      */
     public Lock acquireLock(Lock lock) {
-        return lockRepository.acquireLock(lock);
+        lock.setAction(LockAction.ACQUIRE);
+
+        // Calculate the expiry based on the current time and lease duration
+        Instant now = Instant.now();
+        long expiry = now.getEpochSecond() + lock.getLeaseDuration();
+        lock.setExpiry(expiry);
+
+        return lockRepository.acquireLock(lock, now.getEpochSecond());
     }
 
     /**
@@ -47,7 +57,14 @@ public class LockService {
      * @return the lock response
      */
     public Lock renewLock(Lock lock) {
-        return lockRepository.renewLock(lock);
+        lock.setAction(LockAction.RENEW);
+
+        // Calculate the expiry based on the current time and lease duration
+        Instant now = Instant.now();
+        long expiry = now.getEpochSecond() + lock.getLeaseDuration();
+        lock.setExpiry(expiry);
+
+        return lockRepository.renewLock(lock, now.getEpochSecond());
     }
 
     /**
@@ -57,6 +74,11 @@ public class LockService {
      * @return the lock response
      */
     public Lock releaseLock(Lock lock) {
-        return lockRepository.releaseLock(lock);
+        lock.setAction(LockAction.RELEASE);
+
+        // Calculate the expiry based on the current time and lease duration
+        Instant now = Instant.now();
+
+        return lockRepository.releaseLock(lock, now.getEpochSecond());
     }
 }

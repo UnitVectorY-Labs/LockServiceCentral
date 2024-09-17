@@ -13,38 +13,181 @@
  */
 package com.unitvectory.lockservicecentral.datamodel.firestore.repository;
 
-import org.springframework.stereotype.Service;
+import java.util.concurrent.ExecutionException;
 
+import com.google.cloud.firestore.DocumentReference;
+import com.google.cloud.firestore.Firestore;
+import com.google.cloud.firestore.Transaction;
 import com.unitvectory.lockservicecentral.datamodel.model.Lock;
 import com.unitvectory.lockservicecentral.datamodel.repository.LockRepository;
+
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * The data model config for GCP Firestore
  * 
  * @author Jared Hatfield (UnitVectorY Labs)
  */
-@Service
+@AllArgsConstructor
+@Slf4j
 public class FirestoreLockRepository implements LockRepository {
 
+    private Firestore firestore;
+
+    private String collectionLocks;
+
+    public Lock getLock(String namespace, String lockName) {
+        // Firestore document reference for the lock, structured by namespace and lock
+        // name.
+        String documentId = namespace + ":" + lockName;
+        DocumentReference docRef = firestore.collection(collectionLocks).document(documentId);
+
+        try {
+            var snapshot = docRef.get().get();
+            if (snapshot.exists()) {
+                return snapshot.toObject(Lock.class);
+            }
+
+        } catch (InterruptedException | ExecutionException e) {
+            log.error("Error getting lock: {} {}", namespace, lockName, e);
+        }
+
+        return null;
+    }
+
     @Override
-    public Lock acquireLock(Lock lock) {
-        // TODO: Implement
-        lock.setSuccess(true);
+    public Lock acquireLock(Lock lock, long now) {
+        // Firestore document reference for the lock, structured by namespace and lock
+        // name.
+        String documentId = lock.getNamespace() + ":" + lock.getLockName();
+        DocumentReference docRef = firestore.collection(collectionLocks)
+                .document(documentId);
+
+        try {
+            // Run a Firestore transaction to ensure atomicity
+            firestore.runTransaction((Transaction transaction) -> {
+                var snapshot = transaction.get(docRef).get();
+
+                if (!snapshot.exists()) {
+                    // Write the lock to Firestore
+                    transaction.set(docRef, lock.toMap());
+                    lock.setSuccess();
+                    log.info("Lock acquired: {}", lock);
+                } else {
+                    Lock existingLock = snapshot.toObject(Lock.class);
+
+                    if (!existingLock.isExpired(now)) {
+                        // Lock is still valid, return conflict
+                        lock.setFailed();
+                        log.warn("Lock conflict, cannot acquire: {}", lock);
+                    } else {
+                        // Lock is expired, so we can acquire it
+                        transaction.set(docRef, lock.toMap());
+                        lock.setSuccess();
+                        log.info("Lock acquired: {}", lock);
+                    }
+                }
+                return null;
+            }).get();
+        } catch (InterruptedException | ExecutionException e) {
+            log.error("Error acquiring lock: {}", lock, e);
+            lock.setFailed();
+        }
+
         return lock;
     }
 
     @Override
-    public Lock renewLock(Lock lock) {
-        // TODO: Implement
-        lock.setSuccess(true);
+    public Lock renewLock(Lock lock, long now) {
+        // Firestore document reference for the lock, structured by namespace and lock
+        // name.
+        String documentId = lock.getNamespace() + ":" + lock.getLockName();
+        DocumentReference docRef = firestore.collection(collectionLocks).document(documentId);
+
+        try {
+            // Run a Firestore transaction to ensure atomicity
+            firestore.runTransaction((Transaction transaction) -> {
+                var snapshot = transaction.get(docRef).get();
+
+                if (!snapshot.exists()) {
+                    // Lock doesn't exist, so it cannot be renewed
+                    lock.setFailed();
+                    log.warn("Lock does not exist, cannot renew: {}", lock);
+                } else {
+                    Lock existingLock = snapshot.toObject(Lock.class);
+
+                    if (!lock.isMatch(existingLock)) {
+                        // Lock doesn't match, so it cannot be renewed
+                        lock.setFailed();
+                        log.warn("Lock does not match, cannot renew: {}", lock);
+                    } else if (existingLock.isExpired(now)) {
+                        // Lock is expired, so it cannot be renewed
+                        lock.setFailed();
+                        log.warn("Expired lock cannot be extended: {}", lock);
+                    } else {
+                        // Successfully renew the lock
+                        long newLeaseDuration = existingLock.getLeaseDuration() + lock.getLeaseDuration();
+                        lock.setLeaseDuration(newLeaseDuration);
+                        long newExpiry = existingLock.getExpiry() + lock.getLeaseDuration();
+                        lock.setExpiry(newExpiry);
+
+                        transaction.set(docRef, lock.toMap());
+                        lock.setSuccess();
+                        log.info("Lock acquired: {}", lock);
+                    }
+                }
+                return null;
+            }).get();
+        } catch (InterruptedException | ExecutionException e) {
+            log.error("Error renewing lock: {}", lock, e);
+            lock.setFailed();
+        }
+
         return lock;
     }
 
     @Override
-    public Lock releaseLock(Lock lock) {
-        // TODO: Implement
-        lock.setSuccess(true);
+    public Lock releaseLock(Lock lock, long now) {
+        // Firestore document reference for the lock, structured by namespace and lock
+        // name.
+        String documentId = lock.getNamespace() + ":" + lock.getLockName();
+        DocumentReference docRef = firestore.collection(collectionLocks).document(documentId);
+
+        try {
+            // Run a Firestore transaction to ensure atomicity
+            firestore.runTransaction((Transaction transaction) -> {
+                var snapshot = transaction.get(docRef).get();
+
+                if (!snapshot.exists()) {
+                    // Lock doesn't exist, so it cannot be renewed
+                    lock.setCleared();
+                    log.info("Lock released: {}", lock);
+                } else {
+                    Lock existingLock = snapshot.toObject(Lock.class);
+
+                    if (lock.isExpired(now)) {
+                        // Lock is expired, so it is already released
+                        lock.setCleared();
+                        log.info("Lock released: {}", lock);
+                    } else if (!lock.isMatch(existingLock)) {
+                        // Lock doesn't match, so it cannot be released
+                        lock.setFailed();
+                        log.warn("Lock does not match, cannot clear: {}", lock);
+                    } else {
+                        // Successfully release the lock by deleting the document
+                        transaction.delete(docRef);
+                        lock.setCleared();
+                        log.info("Lock cleared: {}", lock);
+                    }
+                }
+                return null;
+            }).get();
+        } catch (InterruptedException | ExecutionException e) {
+            log.error("Error renewing lock: {}", lock, e);
+            lock.setFailed();
+        }
+
         return lock;
     }
-
 }

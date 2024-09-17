@@ -15,10 +15,13 @@ package com.unitvectory.lockservicecentral.datamodel.firestore.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
 import com.google.cloud.firestore.Firestore;
+import com.unitvectory.lockservicecentral.datamodel.firestore.repository.FirestoreLockRepository;
+import com.unitvectory.lockservicecentral.datamodel.repository.LockRepository;
 
 /**
  * The data model config for GCP
@@ -32,7 +35,11 @@ public class DatamodelGcpConfig {
 	@Autowired
 	private Firestore firestore;
 
-	@Value("${sac.datamodel.firestore.collection.authorizations:locks}")
+	@Value("${datamodel.firestore.collection.locks:locks}")
 	private String collectionLocks;
 
+	@Bean
+	public LockRepository lockRepository() {
+		return new FirestoreLockRepository(this.firestore, this.collectionLocks);
+	}
 }

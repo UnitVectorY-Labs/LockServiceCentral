@@ -16,6 +16,8 @@ package com.unitvectory.lockservicecentral.api.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -41,44 +43,53 @@ public class LockController {
     public ResponseEntity<Lock> acquireLock(
             @PathVariable String namespace,
             @PathVariable String lockName,
-            @ValidateJsonSchema(version = ValidateJsonSchemaVersion.V7, schemaPath = "classpath:acquireLockSchema.json") Lock lock) {
+            @ValidateJsonSchema(version = ValidateJsonSchemaVersion.V7, schemaPath = "classpath:acquireLockSchema.json") Lock lock,
+            @AuthenticationPrincipal Jwt jwt) {
 
         // Pass the parameters as part of the object
         lock.setNamespace(namespace);
+        lock.setOwner(jwt.getSubject());
         lock.setLockName(lockName);
 
         Lock acquiredLock = lockService.acquireLock(lock);
 
-        return acquiredLock.getSuccess() ? ResponseEntity.ok(lock) : ResponseEntity.status(HttpStatus.CONFLICT).build();
+        return acquiredLock.getSuccess() ? ResponseEntity.ok(lock)
+                : ResponseEntity.status(HttpStatus.CONFLICT).body(lock);
     }
 
     @PostMapping("/v1/{namespace}/lock/{lockName}/renew")
     public ResponseEntity<Lock> renewLock(
             @PathVariable String namespace,
             @PathVariable String lockName,
-            @ValidateJsonSchema(version = ValidateJsonSchemaVersion.V7, schemaPath = "classpath:renewLockSchema.json") Lock lock) {
+            @ValidateJsonSchema(version = ValidateJsonSchemaVersion.V7, schemaPath = "classpath:renewLockSchema.json") Lock lock,
+            @AuthenticationPrincipal Jwt jwt) {
 
         // Pass the parameters as part of the object
         lock.setNamespace(namespace);
+        lock.setOwner(jwt.getSubject());
         lock.setLockName(lockName);
 
         Lock renewedLock = lockService.renewLock(lock);
 
-        return renewedLock.getSuccess() ? ResponseEntity.ok(lock) : ResponseEntity.status(HttpStatus.CONFLICT).build();
+        return renewedLock.getSuccess() ? ResponseEntity.ok(lock)
+                : ResponseEntity.status(HttpStatus.CONFLICT).body(lock);
     }
 
     @PostMapping("/v1/{namespace}/lock/{lockName}/release")
     public ResponseEntity<Lock> releaseLock(
             @PathVariable String namespace,
             @PathVariable String lockName,
-            @ValidateJsonSchema(version = ValidateJsonSchemaVersion.V7, schemaPath = "classpath:releaseLockSchema.json") Lock lock) {
+            @ValidateJsonSchema(version = ValidateJsonSchemaVersion.V7, schemaPath = "classpath:releaseLockSchema.json") Lock lock,
+            @AuthenticationPrincipal Jwt jwt) {
 
         // Pass the parameters as part of the object
         lock.setNamespace(namespace);
+        lock.setOwner(jwt.getSubject());
         lock.setLockName(lockName);
 
         Lock releasedLock = lockService.releaseLock(lock);
 
-        return releasedLock.getSuccess() ? ResponseEntity.ok(lock) : ResponseEntity.status(HttpStatus.CONFLICT).build();
+        return releasedLock.getSuccess() ? ResponseEntity.ok(lock)
+                : ResponseEntity.status(HttpStatus.CONFLICT).body(lock);
     }
 }
