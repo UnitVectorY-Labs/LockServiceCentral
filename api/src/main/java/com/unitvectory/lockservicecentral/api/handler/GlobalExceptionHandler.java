@@ -16,9 +16,11 @@ package com.unitvectory.lockservicecentral.api.handler;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 
 import com.unitvectory.jsonschema4springboot.ValidateJsonSchemaException;
 import com.unitvectory.jsonschema4springboot.ValidateJsonSchemaFailedResponse;
+import com.unitvectory.lockservicecentral.api.dto.ValidationErrorResponse;
 
 /**
  * The global exception handler
@@ -32,5 +34,11 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ValidateJsonSchemaFailedResponse> onValidateJsonSchemaException(
             ValidateJsonSchemaException ex) {
         return ResponseEntity.badRequest().body(new ValidateJsonSchemaFailedResponse(ex));
+    }
+
+    @ExceptionHandler(HandlerMethodValidationException.class)
+    public ResponseEntity<ValidationErrorResponse> onHandlerMethodValidationException(
+            HandlerMethodValidationException ex) {
+        return ResponseEntity.badRequest().body(new ValidationErrorResponse(ex));
     }
 }
