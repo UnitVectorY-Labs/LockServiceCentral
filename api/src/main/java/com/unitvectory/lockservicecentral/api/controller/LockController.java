@@ -52,8 +52,12 @@ public class LockController {
 
         // Pass the parameters as part of the object
         lock.setNamespace(namespace);
-        lock.setOwner(jwt.getSubject());
         lock.setLockName(lockName);
+        if (jwt == null) {
+            lock.setOwner("anonymous");
+        } else {
+            lock.setOwner(jwt.getSubject());
+        }
 
         Lock acquiredLock = lockService.acquireLock(lock);
 
@@ -70,8 +74,12 @@ public class LockController {
 
         // Pass the parameters as part of the object
         lock.setNamespace(namespace);
-        lock.setOwner(jwt.getSubject());
         lock.setLockName(lockName);
+        if (jwt == null) {
+            lock.setOwner("anonymous");
+        } else {
+            lock.setOwner(jwt.getSubject());
+        }
 
         Lock renewedLock = lockService.renewLock(lock);
 
@@ -88,8 +96,12 @@ public class LockController {
 
         // Pass the parameters as part of the object
         lock.setNamespace(namespace);
-        lock.setOwner(jwt.getSubject());
         lock.setLockName(lockName);
+        if (jwt == null) {
+            lock.setOwner("anonymous");
+        } else {
+            lock.setOwner(jwt.getSubject());
+        }
 
         Lock releasedLock = lockService.releaseLock(lock);
 
