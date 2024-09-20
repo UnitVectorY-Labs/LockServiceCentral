@@ -19,7 +19,9 @@ import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * The lock.
@@ -27,6 +29,8 @@ import lombok.Data;
  * @author Jared Hatfield (UnitVectorY Labs)
  */
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Lock {
 
@@ -47,6 +51,11 @@ public class Lock {
 
     private Long expiry;
 
+    public Lock copy() {
+        return new Lock(this.action, this.success, this.namespace, this.lockName, this.owner, this.instanceId,
+                this.leaseDuration, this.expiry);
+    }
+
     public Map<String, Object> toMap() {
         Map<String, Object> map = new HashMap<>();
         map.put("namespace", this.namespace);
@@ -56,6 +65,22 @@ public class Lock {
         map.put("leaseDuration", this.leaseDuration);
         map.put("expiry", this.expiry);
         return map;
+    }
+
+    public void setGet(long now) {
+        this.action = LockAction.GET;
+        this.success = null;
+
+        // The instanceId is treated similar to a secret
+        this.instanceId = null;
+
+        if (expiry != null && expiry < now) {
+            this.owner = null;
+            this.leaseDuration = null;
+            this.expiry = null;
+        } else if (expiry != null) {
+            this.leaseDuration = null;
+        }
     }
 
     public void setFailed() {
@@ -99,5 +124,4 @@ public class Lock {
                 (this.owner == null || this.owner.equals(lock.owner)) &&
                 (this.instanceId == null || this.instanceId.equals(lock.instanceId));
     }
-
 }

@@ -11,44 +11,26 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.unitvectory.lockservicecentral.datamodel.model;
+package com.unitvectory.lockservicecentral.datamodel.memory.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
+
+import com.unitvectory.lockservicecentral.datamodel.memory.repository.MemoryLockRepository;
+import com.unitvectory.lockservicecentral.datamodel.repository.LockRepository;
 
 /**
- * The lock action.
+ * The data model config for Memory
  * 
  * @author Jared Hatfield (UnitVectorY Labs)
  */
-public enum LockAction {
+@Configuration
+@Profile("datamodel-memory")
+public class DatamodelMemoryConfig {
 
-    /**
-     * Checks the status of the lock
-     */
-    GET,
-
-    /**
-     * Acquires the lock
-     */
-    ACQUIRE,
-
-    /**
-     * Renews the lock
-     */
-    RENEW,
-
-    /**
-     * Releases the lock
-     */
-    RELEASE,
-
-    /**
-     * The lock action failed
-     */
-    FAILED,
-
-    /**
-     * The lock action succeeded
-     */
-    SUCCESS,
-
-    ;
+	@Bean
+	public LockRepository lockRepository() {
+		return new MemoryLockRepository();
+	}
 }

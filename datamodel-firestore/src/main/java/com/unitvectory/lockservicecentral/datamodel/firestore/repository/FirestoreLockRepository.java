@@ -22,6 +22,7 @@ import com.unitvectory.lockservicecentral.datamodel.model.Lock;
 import com.unitvectory.lockservicecentral.datamodel.repository.LockRepository;
 
 import lombok.AllArgsConstructor;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -37,7 +38,7 @@ public class FirestoreLockRepository implements LockRepository {
 
     private String collectionLocks;
 
-    public Lock getLock(String namespace, String lockName) {
+    public Lock getLock(@NonNull String namespace, @NonNull String lockName) {
         // Firestore document reference for the lock, structured by namespace and lock
         // name.
         String documentId = namespace + ":" + lockName;
@@ -57,7 +58,7 @@ public class FirestoreLockRepository implements LockRepository {
     }
 
     @Override
-    public Lock acquireLock(Lock lock, long now) {
+    public Lock acquireLock(@NonNull Lock lock, long now) {
         // Firestore document reference for the lock, structured by namespace and lock
         // name.
         String documentId = lock.getNamespace() + ":" + lock.getLockName();
@@ -77,7 +78,14 @@ public class FirestoreLockRepository implements LockRepository {
                 } else {
                     Lock existingLock = snapshot.toObject(Lock.class);
 
-                    if (!existingLock.isExpired(now)) {
+                    if (lock.isMatch(existingLock)) {
+                        // Lock is already acquired by the same owner, it can be updated with the new
+                        // expiry
+                        transaction.set(docRef, lock.toMap());
+                        lock.setSuccess();
+                        log.info("Lock already acquired: {}", lock);
+
+                    } else if (!existingLock.isExpired(now)) {
                         // Lock is still valid, return conflict
                         lock.setFailed();
                         log.warn("Lock conflict, cannot acquire: {}", lock);
@@ -99,7 +107,7 @@ public class FirestoreLockRepository implements LockRepository {
     }
 
     @Override
-    public Lock renewLock(Lock lock, long now) {
+    public Lock renewLock(@NonNull Lock lock, long now) {
         // Firestore document reference for the lock, structured by namespace and lock
         // name.
         String documentId = lock.getNamespace() + ":" + lock.getLockName();
@@ -128,8 +136,8 @@ public class FirestoreLockRepository implements LockRepository {
                     } else {
                         // Successfully renew the lock
                         long newLeaseDuration = existingLock.getLeaseDuration() + lock.getLeaseDuration();
-                        lock.setLeaseDuration(newLeaseDuration);
                         long newExpiry = existingLock.getExpiry() + lock.getLeaseDuration();
+                        lock.setLeaseDuration(newLeaseDuration);
                         lock.setExpiry(newExpiry);
 
                         transaction.set(docRef, lock.toMap());
@@ -148,7 +156,7 @@ public class FirestoreLockRepository implements LockRepository {
     }
 
     @Override
-    public Lock releaseLock(Lock lock, long now) {
+    public Lock releaseLock(@NonNull Lock lock, long now) {
         // Firestore document reference for the lock, structured by namespace and lock
         // name.
         String documentId = lock.getNamespace() + ":" + lock.getLockName();

@@ -19,6 +19,7 @@
         <module>datamodel</module>
 
         <module>datamodel-firestore</module>
+        <module>datamodel-memory</module>
     </modules>
     <!--
     <profiles>

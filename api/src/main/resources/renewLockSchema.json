@@ -8,7 +8,8 @@
         "type": "string"
       },
       "leaseDuration": {
-        "type": "integer"
+        "type": "integer",
+        "minimum": 1
       }
     },
     "required": ["instanceId", "leaseDuration"]

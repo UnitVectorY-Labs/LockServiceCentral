@@ -22,6 +22,8 @@ import com.unitvectory.lockservicecentral.datamodel.model.Lock;
 import com.unitvectory.lockservicecentral.datamodel.model.LockAction;
 import com.unitvectory.lockservicecentral.datamodel.repository.LockRepository;
 
+import lombok.NonNull;
+
 /**
  * The Lock Service
  * 
@@ -34,20 +36,56 @@ public class LockService {
     private LockRepository lockRepository;
 
     /**
+     * Get the current time.
+     * 
+     * @return the current time
+     */
+    private long getNow() {
+        return Instant.now().getEpochSecond();
+    }
+
+    /**
+     * Get a lock.
+     * 
+     * @param namespace the namespace
+     * @param lockName  the lock name
+     * @return the lock
+     */
+    public Lock getLock(@NonNull String namespace, @NonNull String lockName) {
+        Lock lock = new Lock();
+        lock.setNamespace(namespace);
+        lock.setLockName(lockName);
+        lock.setAction(LockAction.GET);
+
+        Lock activeLock = lockRepository.getLock(namespace, lockName);
+
+        if (activeLock != null) {
+            lock = activeLock;
+        }
+
+        long now = getNow();
+
+        // Clear out the owner and instance ID
+        lock.setGet(now);
+
+        return lock;
+    }
+
+    /**
      * Acquire a lock.
      * 
      * @param lock the lock request
      * @return the lock response
      */
-    public Lock acquireLock(Lock lock) {
+    public Lock acquireLock(@NonNull Lock lock) {
         lock.setAction(LockAction.ACQUIRE);
 
         // Calculate the expiry based on the current time and lease duration
-        Instant now = Instant.now();
-        long expiry = now.getEpochSecond() + lock.getLeaseDuration();
+        long now = getNow();
+        long expiry = now + lock.getLeaseDuration();
         lock.setExpiry(expiry);
 
-        return lockRepository.acquireLock(lock, now.getEpochSecond());
+        return lockRepository.acquireLock(lock, now);
     }
 
     /**
@@ -56,15 +94,15 @@ public class LockService {
      * @param lock the lock request
      * @return the lock response
      */
-    public Lock renewLock(Lock lock) {
+    public Lock renewLock(@NonNull Lock lock) {
         lock.setAction(LockAction.RENEW);
 
         // Calculate the expiry based on the current time and lease duration
-        Instant now = Instant.now();
-        long expiry = now.getEpochSecond() + lock.getLeaseDuration();
+        long now = getNow();
+        long expiry = now + lock.getLeaseDuration();
         lock.setExpiry(expiry);
 
-        return lockRepository.renewLock(lock, now.getEpochSecond());
+        return lockRepository.renewLock(lock, now);
     }
 
     /**
@@ -73,12 +111,12 @@ public class LockService {
      * @param lock the lock request
      * @return the lock response
      */
-    public Lock releaseLock(Lock lock) {
+    public Lock releaseLock(@NonNull Lock lock) {
         lock.setAction(LockAction.RELEASE);
 
-        // Calculate the expiry based on the current time and lease duration
-        Instant now = Instant.now();
+        // The current time is used to release the lock
+        long now = getNow();
 
-        return lockRepository.releaseLock(lock, now.getEpochSecond());
+        return lockRepository.releaseLock(lock, now);
     }
 }
