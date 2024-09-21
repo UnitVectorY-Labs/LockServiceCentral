@@ -13,6 +13,10 @@ paths:
         Retrieves the current status of a specific `lockName` in the provided `namespace`.
         
         This returns the lock status even if the lock does not exist as that is simply a possible lock that can be acquired.
+
+        If the lock is held, the response will include the `owner` and `expiry` time of the lock.
+
+        The `instanceId` is used as a pseudo secret to ensure that the specific client that acquired the lock is the one that is renewing or releasing it and is therefore not returned.
       parameters:
         - name: lockName
           in: path
@@ -34,19 +38,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Lock'
+                $ref: '#/components/schemas/LockStatus'
         '400':
-          description: Bad request due to JSON validation failure.
+          description: Bad request due to invalid input.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ValidationError'
-        '409':
-          description: Conflict due to lock acquisition failure.
+        '500':
+          description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/LockConflict'
+                $ref: '#/components/schemas/InternalError'
 
   /v1/{namespace}/lock/{lockName}/acquire:
     post:
@@ -54,7 +58,7 @@ paths:
       description: |
         Attempts to acquire a lock for a specific `lockName` in the provided `namespace`.
 
-        For a lock to be acquired, it must not be currently held by another `owner` or the same owner with a different `instanceId`. If the lock is already held, the acquisition will fail with a `409 Conflict` response.
+        For a lock to be acquired, it must not be currently held by another `owner` or the same owner with a different `instanceId`. If the lock is already held, the acquisition will fail with a `423 Locked` response.
 
         If the lock is held by the same `owner` as denoted from the `sub` claim from the JWT and `instanceId` the lock will be acquired and overwritten with the new `leaseDuration`.
       parameters:
@@ -97,17 +101,23 @@ paths:
               schema:
                 $ref: '#/components/schemas/Lock'
         '400':
-          description: Bad request due to JSON validation failure.
+          description: Bad request due to invalid input.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ValidationError'
-        '409':
-          description: Conflict due to lock acquisition failure.
+        '423':
+          description: Locked acquisition failed.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/LockConflict'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalError'
 
   /v1/{namespace}/lock/{lockName}/renew:
     post:
@@ -115,9 +125,9 @@ paths:
       description: |
         Renews an existing lock by extending its lease duration by the specified amount.
 
-        In order to be extended the lock must be held by the same `owner` as denoted from the `sub` claim from the JWT and `instanceId` provided. If the lock is held by a different `owner` or the same owner with a different `instanceId`, the renewal will fail with a `409 Conflict` response.
+        In order to be extended the lock must be held by the same `owner` as denoted from the `sub` claim from the JWT and `instanceId` provided. If the lock is held by a different `owner` or the same owner with a different `instanceId`, the renewal will fail with a `423 Locked` response.
 
-        If the lock is expired, the renewal will fail with a `409 Conflict` response.
+        If the lock is expired, the renewal will fail with a `423 Locked` response.
       parameters:
         - name: lockName
           in: path
@@ -158,17 +168,23 @@ paths:
               schema:
                 $ref: '#/components/schemas/Lock'
         '400':
-          description: Bad request due to JSON validation failure.
+          description: Bad request due to invalid input.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ValidationError'
-        '409':
-          description: Conflict due to lock renewal failure.
+        '423':
+          description: Locked acquisition failed.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/LockConflict'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalError'
 
   /v1/{namespace}/lock/{lockName}/release:
     post:
@@ -178,7 +194,7 @@ paths:
 
         A lock held by the same `owner` as denoted from the `sub` claim from the JWT and `instanceId` provided will be released.
         
-        If the lock is held by a different `owner` or the same owner with a different `instanceId`, the release will fail with a `409 Conflict` response.
+        If the lock is held by a different `owner` or the same owner with a different `instanceId`, the release will fail with a `423 Locked` response.
 
         However, if the lock is expired or has not been acquired, the release will still succeed.
       parameters:
@@ -216,7 +232,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Lock'
         '400':
-          description: Bad request due to JSON validation failure.
+          description: Bad request due to invalid input.
           content:
             application/json:
               schema:
@@ -227,47 +243,115 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/LockConflict'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalError'
 
 components:
   schemas:
-    Lock:
+    LockStatus:
       type: object
       properties:
         namespace:
           type: string
+          description: The namespace under which the lock is managed.
         lockName:
           type: string
+          description: The name of the lock.
         owner:
           type: string
-        instanceId:
-          type: string
-        leaseDuration:
-          type: integer
+          description: The owner of the lock.
         expiry:
           type: integer
+          description: The expiry time of the lock.
+      required:
+        - namespace
+        - lockName
+
+    Lock:
+      type: object
+      properties:
         success:
           type: boolean
+          description: Whether the operation was successful.
+        namespace:
+          type: string
+          description: The namespace under which the lock is managed.
+        lockName:
+          type: string
+          description: The name of the lock.
+        owner:
+          type: string
+          description: The owner of the lock.
+        instanceId:
+          type: string
+          description: The unique instance ID of the client that acquired the lock.
+        leaseDuration:
+          type: integer
+          description: The duration for which the lock is held in seconds.
+        expiry:
+          type: integer
+          description: The expiry time of the lock in epoch seconds.
+      required:
+        - success
+        - namespace
+        - lockName
+        - owner
+        - instanceId
+        - leaseDuration
+        - expiry
 
     ValidationError:
       type: object
       properties:
         message:
           type: string
+          description: The error message.
+          example: Validation failed
         details:
           type: array
+          description: The details of the validation error.
           items:
             type: string
+            description: The specific validation error.
+      required:
+        - message
+        - details
 
     LockConflict:
       type: object
       properties:
         success:
           type: boolean
+          description: Whether the operation was successful.
           example: false
         namespace:
           type: string
+          description: The namespace under which the lock is managed.
         lockName:
           type: string
+          description: The name of the lock.
+      required:
+        - success
+        - namespace
+        - lockName
+
+    InternalError:
+      type: object
+      properties:
+        message:
+          type: string
+          description: The error message.
+          example: Internal server error
+        errorId:
+          type: string
+          description: The unique error ID that can be used to identify the error in the server logs.
+      required:
+        - message
+        - errorId
 
   securitySchemes:
     bearerAuth:

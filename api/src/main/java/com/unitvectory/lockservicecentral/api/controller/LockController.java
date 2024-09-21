@@ -86,7 +86,7 @@ public class LockController {
         Lock acquiredLock = lockService.acquireLock(lock);
 
         return acquiredLock.getSuccess() ? ResponseEntity.ok(acquiredLock)
-                : ResponseEntity.status(HttpStatus.CONFLICT).body(acquiredLock);
+                : ResponseEntity.status(HttpStatus.LOCKED).body(acquiredLock);
     }
 
     /**
@@ -110,7 +110,7 @@ public class LockController {
         Lock renewedLock = lockService.renewLock(lock);
 
         return renewedLock.getSuccess() ? ResponseEntity.ok(renewedLock)
-                : ResponseEntity.status(HttpStatus.CONFLICT).body(renewedLock);
+                : ResponseEntity.status(HttpStatus.LOCKED).body(renewedLock);
     }
 
     /**
@@ -134,7 +134,7 @@ public class LockController {
         Lock releasedLock = lockService.releaseLock(lock);
 
         return releasedLock.getSuccess() ? ResponseEntity.ok(releasedLock)
-                : ResponseEntity.status(HttpStatus.CONFLICT).body(releasedLock);
+                : ResponseEntity.status(HttpStatus.LOCKED).body(releasedLock);
     }
 
     /**

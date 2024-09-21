@@ -13,6 +13,7 @@
  */
 package com.unitvectory.lockservicecentral.api.handler;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -20,7 +21,10 @@ import org.springframework.web.method.annotation.HandlerMethodValidationExceptio
 
 import com.unitvectory.jsonschema4springboot.ValidateJsonSchemaException;
 import com.unitvectory.jsonschema4springboot.ValidateJsonSchemaFailedResponse;
+import com.unitvectory.lockservicecentral.api.dto.InternalErrorResponse;
 import com.unitvectory.lockservicecentral.api.dto.ValidationErrorResponse;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * The global exception handler
@@ -28,6 +32,7 @@ import com.unitvectory.lockservicecentral.api.dto.ValidationErrorResponse;
  * @author Jared Hatfield (UnitVectorY Labs)
  */
 @ControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(ValidateJsonSchemaException.class)
@@ -40,5 +45,16 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ValidationErrorResponse> onHandlerMethodValidationException(
             HandlerMethodValidationException ex) {
         return ResponseEntity.badRequest().body(new ValidationErrorResponse(ex));
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<InternalErrorResponse> onException(Exception ex) {
+        // This will generate a unique error ID for each error
+        InternalErrorResponse response = new InternalErrorResponse();
+
+        // Logging the error ID and the exception so they can be correlated
+        log.error(response.getErrorId(), ex);
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
 }
