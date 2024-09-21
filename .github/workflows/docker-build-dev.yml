@@ -17,9 +17,9 @@ jobs:
       matrix:
         include:
           - profile: memory
-            tag: lock-memory
+            tag: memory
           - profile: firestore
-            tag: lock-firestore
+            tag: firestore
 
     steps:
     - name: Checkout code
