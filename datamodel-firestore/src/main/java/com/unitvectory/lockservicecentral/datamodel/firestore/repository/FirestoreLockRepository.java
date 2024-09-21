@@ -13,8 +13,10 @@
  */
 package com.unitvectory.lockservicecentral.datamodel.firestore.repository;
 
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
+import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.Transaction;
@@ -72,7 +74,13 @@ public class FirestoreLockRepository implements LockRepository {
 
                 if (!snapshot.exists()) {
                     // Write the lock to Firestore
-                    transaction.set(docRef, lock.toMap());
+                    Map<String, Object> data = lock.toMap();
+
+                    // Set the Firestore specific TTL attribute
+                    Timestamp ttl = Timestamp.ofTimeSecondsAndNanos(lock.getExpiry(), 0);
+                    data.put("ttl", ttl);
+
+                    transaction.set(docRef, data);
                     lock.setSuccess();
                     log.info("Lock acquired: {}", lock);
                 } else {
@@ -81,7 +89,13 @@ public class FirestoreLockRepository implements LockRepository {
                     if (lock.isMatch(existingLock)) {
                         // Lock is already acquired by the same owner, it can be updated with the new
                         // expiry
-                        transaction.set(docRef, lock.toMap());
+                        Map<String, Object> data = lock.toMap();
+
+                        // Set the Firestore specific TTL attribute
+                        Timestamp ttl = Timestamp.ofTimeSecondsAndNanos(lock.getExpiry(), 0);
+                        data.put("ttl", ttl);
+
+                        transaction.set(docRef, data);
                         lock.setSuccess();
                         log.info("Lock already acquired: {}", lock);
 
@@ -91,7 +105,13 @@ public class FirestoreLockRepository implements LockRepository {
                         log.warn("Lock conflict, cannot acquire: {}", lock);
                     } else {
                         // Lock is expired, so we can acquire it
-                        transaction.set(docRef, lock.toMap());
+                        Map<String, Object> data = lock.toMap();
+
+                        // Set the Firestore specific TTL attribute
+                        Timestamp ttl = Timestamp.ofTimeSecondsAndNanos(lock.getExpiry(), 0);
+                        data.put("ttl", ttl);
+
+                        transaction.set(docRef, data);
                         lock.setSuccess();
                         log.info("Lock acquired: {}", lock);
                     }
@@ -140,7 +160,14 @@ public class FirestoreLockRepository implements LockRepository {
                         lock.setLeaseDuration(newLeaseDuration);
                         lock.setExpiry(newExpiry);
 
-                        transaction.set(docRef, lock.toMap());
+                        Map<String, Object> data = lock.toMap();
+
+                        // Set the Firestore specific TTL attribute
+                        Timestamp ttl = Timestamp.ofTimeSecondsAndNanos(lock.getExpiry(), 0);
+                        data.put("ttl", ttl);
+
+                        transaction.set(docRef, data);
+
                         lock.setSuccess();
                         log.info("Lock acquired: {}", lock);
                     }
