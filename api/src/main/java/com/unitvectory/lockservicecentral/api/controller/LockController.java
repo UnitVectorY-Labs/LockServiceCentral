@@ -57,7 +57,7 @@ public class LockController {
      */
     @GetMapping("/v1/{namespace}/lock/{lockName}")
     public ResponseEntity<Lock> getLock(
-            @Valid @PathVariable @Pattern(regexp = "^[a-zA-Z0-9_-]+$", message = "Namespace must be alphanumeric with dashes and underscores only") @Size(min = 4, max = 64, message = "Namespace must be between 3 and 64 characters long") String namespace,
+            @Valid @PathVariable @Pattern(regexp = "^[a-zA-Z0-9_-]+$", message = "Namespace must be alphanumeric with dashes and underscores only") @Size(min = 3, max = 64, message = "Namespace must be between 3 and 64 characters long") String namespace,
             @Valid @PathVariable @Pattern(regexp = "^[a-zA-Z0-9_-]+$", message = "Lock name must be alphanumeric with dashes and underscores only") @Size(min = 3, max = 64, message = "Lock name must be between 3 and 64 characters long") String lockName) {
 
         Lock lock = lockService.getLock(namespace, lockName);
@@ -76,7 +76,7 @@ public class LockController {
      */
     @PostMapping("/v1/{namespace}/lock/{lockName}/acquire")
     public ResponseEntity<Lock> acquireLock(
-            @Valid @PathVariable @Pattern(regexp = "^[a-zA-Z0-9_-]+$", message = "Namespace must be alphanumeric with dashes and underscores only") @Size(min = 4, max = 64, message = "Namespace must be between 3 and 64 characters long") String namespace,
+            @Valid @PathVariable @Pattern(regexp = "^[a-zA-Z0-9_-]+$", message = "Namespace must be alphanumeric with dashes and underscores only") @Size(min = 3, max = 64, message = "Namespace must be between 3 and 64 characters long") String namespace,
             @Valid @PathVariable @Pattern(regexp = "^[a-zA-Z0-9_-]+$", message = "Lock name must be alphanumeric with dashes and underscores only") @Size(min = 3, max = 64, message = "Lock name must be between 3 and 64 characters long") String lockName,
             @ValidateJsonSchema(version = ValidateJsonSchemaVersion.V7, schemaPath = "classpath:acquireLockSchema.json") Lock lock,
             @AuthenticationPrincipal Jwt jwt) {
@@ -100,7 +100,7 @@ public class LockController {
      */
     @PostMapping("/v1/{namespace}/lock/{lockName}/renew")
     public ResponseEntity<Lock> renewLock(
-            @Valid @PathVariable @Pattern(regexp = "^[a-zA-Z0-9_-]+$", message = "Namespace must be alphanumeric with dashes and underscores only") @Size(min = 4, max = 64, message = "Namespace must be between 3 and 64 characters long") String namespace,
+            @Valid @PathVariable @Pattern(regexp = "^[a-zA-Z0-9_-]+$", message = "Namespace must be alphanumeric with dashes and underscores only") @Size(min = 3, max = 64, message = "Namespace must be between 3 and 64 characters long") String namespace,
             @Valid @PathVariable @Pattern(regexp = "^[a-zA-Z0-9_-]+$", message = "Lock name must be alphanumeric with dashes and underscores only") @Size(min = 3, max = 64, message = "Lock name must be between 3 and 64 characters long") String lockName,
             @ValidateJsonSchema(version = ValidateJsonSchemaVersion.V7, schemaPath = "classpath:renewLockSchema.json") Lock lock,
             @AuthenticationPrincipal Jwt jwt) {
@@ -124,7 +124,7 @@ public class LockController {
      */
     @PostMapping("/v1/{namespace}/lock/{lockName}/release")
     public ResponseEntity<Lock> releaseLock(
-            @Valid @PathVariable @Pattern(regexp = "^[a-zA-Z0-9_-]+$", message = "Namespace must be alphanumeric with dashes and underscores only") @Size(min = 4, max = 64, message = "Namespace must be between 3 and 64 characters long") String namespace,
+            @Valid @PathVariable @Pattern(regexp = "^[a-zA-Z0-9_-]+$", message = "Namespace must be alphanumeric with dashes and underscores only") @Size(min = 3, max = 64, message = "Namespace must be between 3 and 64 characters long") String namespace,
             @Valid @PathVariable @Pattern(regexp = "^[a-zA-Z0-9_-]+$", message = "Lock name must be alphanumeric with dashes and underscores only") @Size(min = 3, max = 64, message = "Lock name must be between 3 and 64 characters long") String lockName,
             @ValidateJsonSchema(version = ValidateJsonSchemaVersion.V7, schemaPath = "classpath:releaseLockSchema.json") Lock lock,
             @AuthenticationPrincipal Jwt jwt) {

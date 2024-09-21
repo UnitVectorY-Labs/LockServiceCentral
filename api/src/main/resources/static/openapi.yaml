@@ -3,6 +3,14 @@ info:
   title: LockServiceCentral API
   description: |
     API that provides a simple interface for distributed locking with lease-based locks, supporting multiple backend systems.
+
+    The locks are managed under a specific `namespace` and are identified by a unique `lockName`. This allows for multiple locks to be managed under the same namespace.
+
+    A lock is acquired by a specific `owner` as determined by the `sub` claim from the JWT and a unique `instanceId` that is provided by the client. The `instanceId` acts as a pseudo-secret that identifies a specific instance of the owner, where the owner is determined by the sub claim in the JWT. This ensures that locks can be uniquely acquired, renewed, and released by the same client.
+
+    The lock is held for a specific `leaseDuration` in seconds. If the lock is not renewed or released within the `leaseDuration`, it will be automatically released. The resolution for locks is in seconds and the `leaseDuration` must be an integer greater than 0 and less than or equal to 86400 seconds (24 hours). This ensures that no lock can be held for an unreasonable length of time, enforcing a maximum of 24 hours before it must be renewed.
+
+    The benefit of using LockServiceCentral is that it provides a simple and consistent API for acquiring, renewing, and releasing locks in your applications. LockServiceCentral supports multiple underlying lock implementations such as GCP Firestore.
   version: 1.0.0
 
 paths:
@@ -24,12 +32,18 @@ paths:
           description: The name of the lock.
           schema:
             type: string
+            minLength: 3
+            maxLength: 64
+            pattern: "^[a-zA-Z0-9_-]+$"
         - name: namespace
           in: path
           required: true
           description: The namespace under which the lock is managed.
           schema:
             type: string
+            minLength: 3
+            maxLength: 64
+            pattern: "^[a-zA-Z0-9_-]+$"
       security:
         - bearerAuth: []
       responses:
@@ -68,12 +82,18 @@ paths:
           description: The name of the lock to acquire.
           schema:
             type: string
+            minLength: 3
+            maxLength: 64
+            pattern: "^[a-zA-Z0-9_-]+$"
         - name: namespace
           in: path
           required: true
           description: The namespace under which the lock is managed.
           schema:
             type: string
+            minLength: 3
+            maxLength: 64
+            pattern: "^[a-zA-Z0-9_-]+$"
       requestBody:
         required: true
         content:
@@ -84,10 +104,15 @@ paths:
                 instanceId:
                   type: string
                   description: Unique instance ID of the client trying to acquire the lock.
+                  minLength: 3
+                  maxLength: 64
+                  pattern: "^[a-zA-Z0-9_-]+$"
                 leaseDuration:
                   type: integer
                   description: Duration (in seconds) for which the lock should be acquired. Must be an integer greater than 0.
                   default: 60
+                  minimum: 1
+                  maximum: 86400
               required:
                 - instanceId
                 - leaseDuration
@@ -135,12 +160,18 @@ paths:
           description: The name of the lock to renew.
           schema:
             type: string
+            minLength: 3
+            maxLength: 64
+            pattern: "^[a-zA-Z0-9_-]+$"
         - name: namespace
           in: path
           required: true
           description: The namespace under which the lock is managed.
           schema:
             type: string
+            minLength: 3
+            maxLength: 64
+            pattern: "^[a-zA-Z0-9_-]+$"
       requestBody:
         required: true
         content:
@@ -151,10 +182,15 @@ paths:
                 instanceId:
                   type: string
                   description: Unique instance ID of the client renewing the lock.
+                  minLength: 3
+                  maxLength: 64
+                  pattern: "^[a-zA-Z0-9_-]+$"
                 leaseDuration:
                   type: integer
                   description: Duration (in seconds) for which the lock's lease should be extended. Must be an integer greater than 0.
                   default: 60
+                  minimum: 1
+                  maximum: 86400
               required:
                 - instanceId
                 - leaseDuration
@@ -204,12 +240,18 @@ paths:
           description: The name of the lock to release.
           schema:
             type: string
+            minLength: 3
+            maxLength: 64
+            pattern: "^[a-zA-Z0-9_-]+$"
         - name: namespace
           in: path
           required: true
           description: The namespace under which the lock is managed.
           schema:
             type: string
+            minLength: 3
+            maxLength: 64
+            pattern: "^[a-zA-Z0-9_-]+$"
       requestBody:
         required: true
         content:
@@ -220,6 +262,9 @@ paths:
                 instanceId:
                   type: string
                   description: Unique instance ID of the client releasing the lock.
+                  minLength: 3
+                  maxLength: 64
+                  pattern: "^[a-zA-Z0-9_-]+$"
               required:
                 - instanceId
       security:
@@ -237,7 +282,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ValidationError'
-        '409':
+        '423':
           description: Conflict due to lock release failure.
           content:
             application/json:
@@ -258,9 +303,15 @@ components:
         namespace:
           type: string
           description: The namespace under which the lock is managed.
+          minLength: 3
+          maxLength: 64
+          pattern: "^[a-zA-Z0-9_-]+$"
         lockName:
           type: string
           description: The name of the lock.
+          minLength: 3
+          maxLength: 64
+          pattern: "^[a-zA-Z0-9_-]+$"
         owner:
           type: string
           description: The owner of the lock.
@@ -280,18 +331,29 @@ components:
         namespace:
           type: string
           description: The namespace under which the lock is managed.
+          minLength: 3
+          maxLength: 64
+          pattern: "^[a-zA-Z0-9_-]+$"
         lockName:
           type: string
           description: The name of the lock.
+          minLength: 3
+          maxLength: 64
+          pattern: "^[a-zA-Z0-9_-]+$"
         owner:
           type: string
           description: The owner of the lock.
         instanceId:
           type: string
           description: The unique instance ID of the client that acquired the lock.
+          minLength: 3
+          maxLength: 64
+          pattern: "^[a-zA-Z0-9_-]+$"
         leaseDuration:
           type: integer
           description: The duration for which the lock is held in seconds.
+          minimum: 1
+          maximum: 86400
         expiry:
           type: integer
           description: The expiry time of the lock in epoch seconds.
@@ -331,9 +393,15 @@ components:
         namespace:
           type: string
           description: The namespace under which the lock is managed.
+          minLength: 3
+          maxLength: 64
+          pattern: "^[a-zA-Z0-9_-]+$"
         lockName:
           type: string
           description: The name of the lock.
+          minLength: 3
+          maxLength: 64
+          pattern: "^[a-zA-Z0-9_-]+$"
       required:
         - success
         - namespace

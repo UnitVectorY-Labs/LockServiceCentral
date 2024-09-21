@@ -5,7 +5,10 @@
     "additionalProperties": false,
     "properties": {
       "instanceId": {
-        "type": "string"
+        "type": "string",
+        "minLength": 3,
+        "maxLength": 64,
+        "pattern": "^[a-zA-Z0-9_-]+$"
       }
     },
     "required": ["instanceId"]

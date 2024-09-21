@@ -5,11 +5,15 @@
     "additionalProperties": false,
     "properties": {
       "instanceId": {
-        "type": "string"
+        "type": "string",
+        "minLength": 3,
+        "maxLength": 64,
+        "pattern": "^[a-zA-Z0-9_-]+$"
       },
       "leaseDuration": {
         "type": "integer",
-        "minimum": 1
+        "minimum": 1,
+        "maximum": 86400
       }
     },
     "required": ["instanceId", "leaseDuration"]
