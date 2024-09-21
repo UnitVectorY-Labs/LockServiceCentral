@@ -23,18 +23,6 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.unitvectory.lockservicecentral</groupId>
-            <artifactId>datamodel-firestore</artifactId>
-            <version>${project.version}</version>
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.unitvectory.lockservicecentral</groupId>
-            <artifactId>datamodel-memory</artifactId>
-            <version>${project.version}</version>
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
@@ -73,6 +61,31 @@
             <scope>provided</scope>
         </dependency>
     </dependencies>
+
+    <profiles>
+        <profile>
+            <id>memory</id>
+            <dependencies>
+                <dependency>
+                    <groupId>com.unitvectory.lockservicecentral</groupId>
+                    <artifactId>datamodel-memory</artifactId>
+                    <version>${project.version}</version>
+                    <scope>runtime</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+        <profile>
+            <id>firestore</id>
+            <dependencies>
+                <dependency>
+                    <groupId>com.unitvectory.lockservicecentral</groupId>
+                    <artifactId>datamodel-firestore</artifactId>
+                    <version>${project.version}</version>
+                    <scope>runtime</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+    </profiles>
 
     <build>
         <plugins>

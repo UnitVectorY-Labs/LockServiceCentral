@@ -16,7 +16,6 @@ package com.unitvectory.lockservicecentral.datamodel.firestore.config;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.FirestoreOptions;
@@ -27,10 +26,9 @@ import com.google.cloud.firestore.FirestoreOptions;
  * @author Jared Hatfield (UnitVectorY Labs)
  */
 @Configuration
-@Profile("datamodel-firestore")
 public class DatamodelGcpFirestoreConfig {
 
-	@Value("${google.cloud.project}")
+	@Value("${google.cloud.project:#{null}}")
 	private String projectId;
 
 	@Value("${datamodel.firestore.database:(default)}")
@@ -38,9 +36,13 @@ public class DatamodelGcpFirestoreConfig {
 
 	@Bean
 	public Firestore firestore() {
-		FirestoreOptions firestoreOptions = FirestoreOptions.getDefaultInstance().toBuilder()
-				.setDatabaseId(this.firestoreDatabase)
-				.setProjectId(this.projectId).build();
-		return firestoreOptions.getService();
+		FirestoreOptions.Builder builder = FirestoreOptions.getDefaultInstance().toBuilder()
+				.setDatabaseId(this.firestoreDatabase);
+
+		if (this.projectId != null) {
+			builder.setProjectId(this.projectId);
+		}
+
+		return builder.build().getService();
 	}
 }

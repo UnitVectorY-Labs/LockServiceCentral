@@ -15,7 +15,6 @@ package com.unitvectory.lockservicecentral.datamodel.memory.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 
 import com.unitvectory.lockservicecentral.datamodel.memory.repository.MemoryLockRepository;
 import com.unitvectory.lockservicecentral.datamodel.repository.LockRepository;
@@ -26,7 +25,6 @@ import com.unitvectory.lockservicecentral.datamodel.repository.LockRepository;
  * @author Jared Hatfield (UnitVectorY Labs)
  */
 @Configuration
-@Profile("datamodel-memory")
 public class DatamodelMemoryConfig {
 
 	@Bean

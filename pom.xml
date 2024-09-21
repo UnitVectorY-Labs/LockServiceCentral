@@ -17,20 +17,21 @@
     <modules>
         <module>api</module>
         <module>datamodel</module>
-
-        <module>datamodel-firestore</module>
-        <module>datamodel-memory</module>
     </modules>
-    <!--
     <profiles>
-    <profile>
+        <profile>
+            <id>memory</id>
+            <modules>
+                <module>datamodel-memory</module>
+            </modules>
+        </profile>
+        <profile>
             <id>firestore</id>
             <modules>
                 <module>datamodel-firestore</module>
             </modules>
         </profile>
     </profiles>
-    -->
 
     <properties>
         <java.version>17</java.version>

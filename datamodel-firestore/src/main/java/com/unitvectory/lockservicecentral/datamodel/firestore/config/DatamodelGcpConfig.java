@@ -17,7 +17,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 
 import com.google.cloud.firestore.Firestore;
 import com.unitvectory.lockservicecentral.datamodel.firestore.repository.FirestoreLockRepository;
@@ -29,13 +28,12 @@ import com.unitvectory.lockservicecentral.datamodel.repository.LockRepository;
  * @author Jared Hatfield (UnitVectorY Labs)
  */
 @Configuration
-@Profile("datamodel-firestore")
 public class DatamodelGcpConfig {
 
 	@Autowired
 	private Firestore firestore;
 
-	@Value("${datamodel.firestore.collection.locks:locks}")
+	@Value("${datamodel.firestore.collection:locks}")
 	private String collectionLocks;
 
 	@Bean
