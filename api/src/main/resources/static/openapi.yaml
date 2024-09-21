@@ -1,0 +1,276 @@
+openapi: 3.0.0
+info:
+  title: LockServiceCentral API
+  description: |
+    API that provides a simple interface for distributed locking with lease-based locks, supporting multiple backend systems.
+  version: 1.0.0
+
+paths:
+  /v1/{namespace}/lock/{lockName}:
+    get:
+      summary: Get lock status
+      description: |
+        Retrieves the current status of a specific `lockName` in the provided `namespace`.
+        
+        This returns the lock status even if the lock does not exist as that is simply a possible lock that can be acquired.
+      parameters:
+        - name: lockName
+          in: path
+          required: true
+          description: The name of the lock.
+          schema:
+            type: string
+        - name: namespace
+          in: path
+          required: true
+          description: The namespace under which the lock is managed.
+          schema:
+            type: string
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lock status retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Lock'
+        '400':
+          description: Bad request due to JSON validation failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '409':
+          description: Conflict due to lock acquisition failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LockConflict'
+
+  /v1/{namespace}/lock/{lockName}/acquire:
+    post:
+      summary: Acquire a lock
+      description: |
+        Attempts to acquire a lock for a specific `lockName` in the provided `namespace`.
+
+        For a lock to be acquired, it must not be currently held by another `owner` or the same owner with a different `instanceId`. If the lock is already held, the acquisition will fail with a `409 Conflict` response.
+
+        If the lock is held by the same `owner` as denoted from the `sub` claim from the JWT and `instanceId` the lock will be acquired and overwritten with the new `leaseDuration`.
+      parameters:
+        - name: lockName
+          in: path
+          required: true
+          description: The name of the lock to acquire.
+          schema:
+            type: string
+        - name: namespace
+          in: path
+          required: true
+          description: The namespace under which the lock is managed.
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                instanceId:
+                  type: string
+                  description: Unique instance ID of the client trying to acquire the lock.
+                leaseDuration:
+                  type: integer
+                  description: Duration (in seconds) for which the lock should be acquired. Must be an integer greater than 0.
+                  default: 60
+              required:
+                - instanceId
+                - leaseDuration
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lock successfully acquired.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Lock'
+        '400':
+          description: Bad request due to JSON validation failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '409':
+          description: Conflict due to lock acquisition failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LockConflict'
+
+  /v1/{namespace}/lock/{lockName}/renew:
+    post:
+      summary: Renew a lock
+      description: |
+        Renews an existing lock by extending its lease duration by the specified amount.
+
+        In order to be extended the lock must be held by the same `owner` as denoted from the `sub` claim from the JWT and `instanceId` provided. If the lock is held by a different `owner` or the same owner with a different `instanceId`, the renewal will fail with a `409 Conflict` response.
+
+        If the lock is expired, the renewal will fail with a `409 Conflict` response.
+      parameters:
+        - name: lockName
+          in: path
+          required: true
+          description: The name of the lock to renew.
+          schema:
+            type: string
+        - name: namespace
+          in: path
+          required: true
+          description: The namespace under which the lock is managed.
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                instanceId:
+                  type: string
+                  description: Unique instance ID of the client renewing the lock.
+                leaseDuration:
+                  type: integer
+                  description: Duration (in seconds) for which the lock's lease should be extended. Must be an integer greater than 0.
+                  default: 60
+              required:
+                - instanceId
+                - leaseDuration
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lock successfully renewed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Lock'
+        '400':
+          description: Bad request due to JSON validation failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '409':
+          description: Conflict due to lock renewal failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LockConflict'
+
+  /v1/{namespace}/lock/{lockName}/release:
+    post:
+      summary: Release a lock
+      description: |
+        Releases an existing lock, making it available for others.
+
+        A lock held by the same `owner` as denoted from the `sub` claim from the JWT and `instanceId` provided will be released.
+        
+        If the lock is held by a different `owner` or the same owner with a different `instanceId`, the release will fail with a `409 Conflict` response.
+
+        However, if the lock is expired or has not been acquired, the release will still succeed.
+      parameters:
+        - name: lockName
+          in: path
+          required: true
+          description: The name of the lock to release.
+          schema:
+            type: string
+        - name: namespace
+          in: path
+          required: true
+          description: The namespace under which the lock is managed.
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                instanceId:
+                  type: string
+                  description: Unique instance ID of the client releasing the lock.
+              required:
+                - instanceId
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lock successfully released.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Lock'
+        '400':
+          description: Bad request due to JSON validation failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '409':
+          description: Conflict due to lock release failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LockConflict'
+
+components:
+  schemas:
+    Lock:
+      type: object
+      properties:
+        namespace:
+          type: string
+        lockName:
+          type: string
+        owner:
+          type: string
+        instanceId:
+          type: string
+        leaseDuration:
+          type: integer
+        expiry:
+          type: integer
+        success:
+          type: boolean
+
+    ValidationError:
+      type: object
+      properties:
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            type: string
+
+    LockConflict:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        namespace:
+          type: string
+        lockName:
+          type: string
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
