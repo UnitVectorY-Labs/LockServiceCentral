@@ -1,3 +1,5 @@
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) [![Work In Progress](https://img.shields.io/badge/Status-Work%20In%20Progress-yellow)](https://guide.unitvectorylabs.com/bestpractices/status/#work-in-progress)
+
 # LockServiceCentral
 
 API that provides a simple interface for distributed locking with lease-based locks, supporting multiple backend systems. By leveraging a modular architecture, it ensures flexibility and scalability to meet diverse application needs.
