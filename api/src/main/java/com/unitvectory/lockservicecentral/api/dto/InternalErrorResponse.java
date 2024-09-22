@@ -42,4 +42,14 @@ public class InternalErrorResponse {
         this.message = "Internal server error";
         this.errorId = UUID.randomUUID().toString();
     }
+
+    /**
+     * Create a new internal error response
+     * 
+     * @param message the message
+     */
+    public InternalErrorResponse(String message) {
+        this.message = message;
+        this.errorId = UUID.randomUUID().toString();
+    }
 }

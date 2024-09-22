@@ -49,6 +49,9 @@ import org.springframework.security.web.SecurityFilterChain;
 @Profile("!test")
 public class MyCustomSecurityConfiguration {
 
+	@Value("${authentication.disabled:false}")
+	private boolean authenticationDisabled;
+
 	@Value("${jwt.issuer:#{null}}")
 	private String issuer;
 
@@ -60,16 +63,9 @@ public class MyCustomSecurityConfiguration {
 
 	@Bean
 	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-		if (isJwtAuthenticationDisabled()) {
-			// No issuer or JWKS provided, no authentication required
-			http
-					// Given this is an unauthenticated backend service, we can disable CSRF
-					.csrf((csrf) -> csrf.disable()).authorizeHttpRequests(authorize -> authorize
-							// Allow API requests as authentication is not required
-							.requestMatchers("/v1/**").permitAll());
-		} else {
+		if (this.issuer != null || this.jwks != null) {
 			// Either issuer or JWKS is provided, so JWT authentication is required
-			NimbusJwtDecoder jwtDecoder = getJwtDecoder();
+			final NimbusJwtDecoder jwtDecoder = gJwtDecoder();
 
 			OAuth2TokenValidator<Jwt> validator = getValidator();
 			jwtDecoder.setJwtValidator(validator);
@@ -80,25 +76,36 @@ public class MyCustomSecurityConfiguration {
 							.requestMatchers("/v1/**").authenticated()
 							.anyRequest().permitAll())
 					.oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.decoder(jwtDecoder)));
+		} else if (this.authenticationDisabled) {
+			// No issuer or JWKS provided, no authentication required
+			http
+					// Given this is an unauthenticated backend service, we can disable CSRF
+					.csrf((csrf) -> csrf.disable()).authorizeHttpRequests(authorize -> authorize
+							// Allow API requests as authentication is not required
+							.anyRequest().permitAll());
+		} else {
+			// No issuer or JWKS provided, but authentication is required, the app is
+			// unusable but this is the default unconfigured state
+			http
+					// Given this is an unauthenticated backend service, we can disable CSRF
+					.csrf((csrf) -> csrf.disable()).authorizeHttpRequests(authorize -> authorize
+							.requestMatchers("/v1/**").authenticated()
+							.anyRequest().permitAll());
 		}
 
 		return http.build();
 	}
 
-	private boolean isJwtAuthenticationDisabled() {
-		// Authentication is disabled if both issuer and jwks are null or empty
-		return (issuer == null || issuer.isBlank()) && (jwks == null || jwks.isBlank());
-	}
-
-	private NimbusJwtDecoder getJwtDecoder() {
+	private NimbusJwtDecoder gJwtDecoder() {
 		if (jwks != null && !jwks.isBlank()) {
 			// Use the provided JWKS URL for validation
 			return NimbusJwtDecoder.withJwkSetUri(jwks).build();
 		} else if (issuer != null && !issuer.isBlank()) {
 			// Use OpenID Connect discovery if issuer is set but no JWKS
 			return NimbusJwtDecoder.withIssuerLocation(issuer).build();
+		} else {
+			throw new IllegalArgumentException("Either jwt.issuer or jwt.jwks must be set");
 		}
-		throw new IllegalStateException("JWT Decoder could not be configured without issuer or JWKS");
 	}
 
 	private OAuth2TokenValidator<Jwt> getValidator() {

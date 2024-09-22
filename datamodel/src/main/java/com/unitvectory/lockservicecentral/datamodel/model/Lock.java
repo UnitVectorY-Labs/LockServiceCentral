@@ -51,6 +51,15 @@ public class Lock {
 
     private Long expiry;
 
+    public Lock(Map<String, Object> map) {
+        this.namespace = (String) map.get("namespace");
+        this.lockName = (String) map.get("lockName");
+        this.owner = (String) map.get("owner");
+        this.instanceId = (String) map.get("instanceId");
+        this.leaseDuration = (Long) map.get("leaseDuration");
+        this.expiry = (Long) map.get("expiry");
+    }
+
     public Lock copy() {
         return new Lock(this.action, this.success, this.namespace, this.lockName, this.owner, this.instanceId,
                 this.leaseDuration, this.expiry);

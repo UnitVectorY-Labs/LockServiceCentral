@@ -15,9 +15,11 @@ package com.unitvectory.lockservicecentral.api.handler;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import com.unitvectory.jsonschema4springboot.ValidateJsonSchemaException;
 import com.unitvectory.jsonschema4springboot.ValidateJsonSchemaFailedResponse;
@@ -45,6 +47,19 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ValidationErrorResponse> onHandlerMethodValidationException(
             HandlerMethodValidationException ex) {
         return ResponseEntity.badRequest().body(new ValidationErrorResponse(ex));
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<InternalErrorResponse> onHttpRequestMethodNotSupportedException(
+            HttpRequestMethodNotSupportedException ex) {
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)
+                .body(new InternalErrorResponse("Method not allowed"));
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<InternalErrorResponse> onNoResourceFoundException(NoResourceFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new InternalErrorResponse("Resource not found"));
     }
 
     @ExceptionHandler(Exception.class)

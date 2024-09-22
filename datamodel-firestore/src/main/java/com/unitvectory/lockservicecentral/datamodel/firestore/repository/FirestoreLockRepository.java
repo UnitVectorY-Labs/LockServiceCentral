@@ -49,7 +49,7 @@ public class FirestoreLockRepository implements LockRepository {
         try {
             var snapshot = docRef.get().get();
             if (snapshot.exists()) {
-                return snapshot.toObject(Lock.class);
+                return new Lock(snapshot.getData());
             }
 
         } catch (InterruptedException | ExecutionException e) {
@@ -84,7 +84,7 @@ public class FirestoreLockRepository implements LockRepository {
                     lock.setSuccess();
                     log.info("Lock acquired: {}", lock);
                 } else {
-                    Lock existingLock = snapshot.toObject(Lock.class);
+                    Lock existingLock = new Lock(snapshot.getData());
 
                     if (lock.isMatch(existingLock)) {
                         // Lock is already acquired by the same owner, it can be updated with the new
@@ -143,7 +143,7 @@ public class FirestoreLockRepository implements LockRepository {
                     lock.setFailed();
                     log.warn("Lock does not exist, cannot renew: {}", lock);
                 } else {
-                    Lock existingLock = snapshot.toObject(Lock.class);
+                    Lock existingLock = new Lock(snapshot.getData());
 
                     if (!lock.isMatch(existingLock)) {
                         // Lock doesn't match, so it cannot be renewed
@@ -199,7 +199,7 @@ public class FirestoreLockRepository implements LockRepository {
                     lock.setCleared();
                     log.info("Lock released: {}", lock);
                 } else {
-                    Lock existingLock = snapshot.toObject(Lock.class);
+                    Lock existingLock = new Lock(snapshot.getData());
 
                     if (lock.isExpired(now)) {
                         // Lock is expired, so it is already released
