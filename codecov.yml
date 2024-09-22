@@ -2,13 +2,13 @@ component_management:
   individual_components:
     - component_id: "api"
       paths:
-        - "api/"
+        - "api/**"
     - component_id: "locker"
       paths:
-        - "locker/"
+        - "locker/**"
     - component_id: "locker-firestore"
       paths:
-        - "locker-firestore/"
+        - "locker-firestore/**"
     - component_id: "locker-memory"
       paths:
-        - "locker-memory/"
+        - "locker-memory/**"
