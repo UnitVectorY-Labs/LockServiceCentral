@@ -24,10 +24,10 @@ import java.util.Map;
  * 
  * @author Jared Hatfield (UnitVectorY Labs)
  */
-public class LockTest {
+class LockTest {
 
     @Test
-    public void testConstructorWithMap() {
+    void testConstructorWithMap() {
         Map<String, Object> map = new HashMap<>();
         map.put("namespace", "testNamespace");
         map.put("lockName", "testLockName");
@@ -44,5 +44,183 @@ public class LockTest {
         assertEquals("testInstanceId", lock.getInstanceId());
         assertEquals(1000L, lock.getLeaseDuration());
         assertEquals(2000L, lock.getExpiry());
+    }
+
+    @Test
+    void copyTest() {
+
+        Lock lock = new Lock();
+        lock.setNamespace("testNamespace");
+        lock.setLockName("testLockName");
+        lock.setOwner("testOwner");
+        lock.setInstanceId("testInstanceId");
+        lock.setLeaseDuration(1000L);
+        lock.setExpiry(2000L);
+
+        Lock copy = lock.copy();
+
+        // Assert that lock and copy are not the exact same object
+        assertNotSame(lock, copy);
+
+        assertEquals("testNamespace", copy.getNamespace());
+        assertEquals("testLockName", copy.getLockName());
+        assertEquals("testOwner", copy.getOwner());
+        assertEquals("testInstanceId", copy.getInstanceId());
+        assertEquals(1000L, copy.getLeaseDuration());
+        assertEquals(2000L, copy.getExpiry());
+    }
+
+    @Test
+    void toMapTest() {
+
+        Lock lock = new Lock();
+        lock.setNamespace("testNamespace");
+        lock.setLockName("testLockName");
+        lock.setOwner("testOwner");
+        lock.setInstanceId("testInstanceId");
+        lock.setLeaseDuration(1000L);
+        lock.setExpiry(2000L);
+
+        Map<String, Object> map = lock.toMap();
+
+        assertEquals("testNamespace", map.get("namespace"));
+        assertEquals("testLockName", map.get("lockName"));
+        assertEquals("testOwner", map.get("owner"));
+        assertEquals("testInstanceId", map.get("instanceId"));
+        assertEquals(1000L, map.get("leaseDuration"));
+        assertEquals(2000L, map.get("expiry"));
+    }
+
+    @Test
+    void setGetTest() {
+        Lock lock = new Lock();
+        lock.setNamespace("testNamespace");
+        lock.setLockName("testLockName");
+        lock.setOwner("testOwner");
+        lock.setInstanceId("testInstanceId");
+        lock.setLeaseDuration(1000L);
+        lock.setExpiry(2000L);
+
+        lock.setGet(3000L);
+
+        assertEquals(LockAction.GET, lock.getAction());
+        assertNull(lock.getSuccess());
+        assertNull(lock.getInstanceId());
+        assertNull(lock.getLeaseDuration());
+        assertNull(lock.getExpiry());
+    }
+
+    @Test
+    void setFailedTest() {
+        Lock lock = new Lock();
+        lock.setNamespace("testNamespace");
+        lock.setLockName("testLockName");
+        lock.setOwner("testOwner");
+        lock.setInstanceId("testInstanceId");
+        lock.setLeaseDuration(1000L);
+        lock.setExpiry(2000L);
+
+        lock.setFailed();
+
+        assertEquals(LockAction.FAILED, lock.getAction());
+        assertFalse(lock.getSuccess());
+        assertNull(lock.getOwner());
+        assertNull(lock.getInstanceId());
+        assertNull(lock.getLeaseDuration());
+        assertNull(lock.getExpiry());
+    }
+
+    @Test
+    void setSuccessTest() {
+        Lock lock = new Lock();
+        lock.setNamespace("testNamespace");
+        lock.setLockName("testLockName");
+        lock.setOwner("testOwner");
+        lock.setInstanceId("testInstanceId");
+        lock.setLeaseDuration(1000L);
+        lock.setExpiry(2000L);
+
+        lock.setSuccess();
+
+        assertEquals(LockAction.SUCCESS, lock.getAction());
+        assertTrue(lock.getSuccess());
+        assertEquals("testOwner", lock.getOwner());
+        assertEquals("testInstanceId", lock.getInstanceId());
+        assertEquals(1000L, lock.getLeaseDuration());
+        assertEquals(2000L, lock.getExpiry());
+    }
+
+    @Test
+    void setClearedTest() {
+        Lock lock = new Lock();
+        lock.setNamespace("testNamespace");
+        lock.setLockName("testLockName");
+        lock.setOwner("testOwner");
+        lock.setInstanceId("testInstanceId");
+        lock.setLeaseDuration(1000L);
+        lock.setExpiry(2000L);
+
+        lock.setCleared();
+
+        assertEquals(LockAction.SUCCESS, lock.getAction());
+        assertTrue(lock.getSuccess());
+        assertNull(lock.getOwner());
+        assertNull(lock.getInstanceId());
+        assertNull(lock.getLeaseDuration());
+        assertNull(lock.getExpiry());
+    }
+
+    @Test
+    void isActiveTest() {
+        Lock lock = new Lock();
+        lock.setNamespace("testNamespace");
+        lock.setLockName("testLockName");
+        lock.setOwner("testOwner");
+        lock.setInstanceId("testInstanceId");
+        lock.setLeaseDuration(1000L);
+        lock.setExpiry(2000L);
+
+        assertTrue(lock.isActive(1999L));
+        assertTrue(lock.isActive(2000L));
+        assertFalse(lock.isActive(2001L));
+    }
+
+    @Test
+    void isExpiredTest() {
+        Lock lock = new Lock();
+        lock.setNamespace("testNamespace");
+        lock.setLockName("testLockName");
+        lock.setOwner("testOwner");
+        lock.setInstanceId("testInstanceId");
+        lock.setLeaseDuration(1000L);
+        lock.setExpiry(2000L);
+
+        assertFalse(lock.isExpired(1999L));
+        assertFalse(lock.isExpired(2000L));
+        assertTrue(lock.isExpired(2001L));
+    }
+
+    @Test
+    void isMatchTest() {
+        Lock lock = new Lock();
+        lock.setNamespace("testNamespace");
+        lock.setLockName("testLockName");
+        lock.setOwner("testOwner");
+        lock.setInstanceId("testInstanceId");
+        lock.setLeaseDuration(1000L);
+        lock.setExpiry(2000L);
+
+        Lock lock2 = new Lock();
+        lock2.setNamespace("testNamespace");
+        lock2.setLockName("testLockName");
+        lock2.setOwner("testOwner");
+        lock2.setInstanceId("testInstanceId");
+        lock2.setLeaseDuration(1000L);
+        lock2.setExpiry(2000L);
+
+        assertTrue(lock.isMatch(lock2));
+
+        lock2.setNamespace("testNamespace2");
+        assertFalse(lock.isMatch(lock2));
     }
 }
