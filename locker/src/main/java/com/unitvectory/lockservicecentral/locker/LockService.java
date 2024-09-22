@@ -11,16 +11,14 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.unitvectory.lockservicecentral.locker.repository;
-
-import com.unitvectory.lockservicecentral.locker.model.Lock;
+package com.unitvectory.lockservicecentral.locker;
 
 /**
- * The lock repository.
+ * The LockService interface.
  * 
  * @author Jared Hatfield (UnitVectorY Labs)
  */
-public interface LockRepository {
+public interface LockService {
 
     /**
      * Get a lock.

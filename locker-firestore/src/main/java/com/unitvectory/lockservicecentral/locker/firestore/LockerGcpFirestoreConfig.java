@@ -11,33 +11,38 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.unitvectory.lockservicecentral.locker.firestore.config;
+package com.unitvectory.lockservicecentral.locker.firestore;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import com.google.cloud.firestore.Firestore;
-import com.unitvectory.lockservicecentral.locker.firestore.repository.FirestoreLockRepository;
-import com.unitvectory.lockservicecentral.locker.repository.LockRepository;
+import com.google.cloud.firestore.FirestoreOptions;
 
 /**
- * The data model config for GCP
+ * The Configuration for the Firestore LockService.
  * 
  * @author Jared Hatfield (UnitVectorY Labs)
  */
 @Configuration
-public class LockerGcpConfig {
+public class LockerGcpFirestoreConfig {
 
-	@Autowired
-	private Firestore firestore;
+	@Value("${google.cloud.project:#{null}}")
+	private String projectId;
 
-	@Value("${locker.firestore.collection:locks}")
-	private String collectionLocks;
+	@Value("${locker.firestore.database:(default)}")
+	private String firestoreDatabase;
 
 	@Bean
-	public LockRepository lockRepository() {
-		return new FirestoreLockRepository(this.firestore, this.collectionLocks);
+	public Firestore firestore() {
+		FirestoreOptions.Builder builder = FirestoreOptions.getDefaultInstance().toBuilder()
+				.setDatabaseId(this.firestoreDatabase);
+
+		if (this.projectId != null) {
+			builder.setProjectId(this.projectId);
+		}
+
+		return builder.build().getService();
 	}
 }

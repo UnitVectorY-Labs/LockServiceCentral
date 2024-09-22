@@ -11,32 +11,44 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.unitvectory.lockservicecentral.locker.memory.repository;
-
-import static org.junit.jupiter.api.Assertions.assertNull;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
-import com.unitvectory.lockservicecentral.locker.model.Lock;
+package com.unitvectory.lockservicecentral.locker;
 
 /**
- * The MemoryLockRepository test.
+ * The lock action.
  * 
  * @author Jared Hatfield (UnitVectorY Labs)
  */
-public class MemoryLockRepositoryTest {
+public enum LockAction {
 
-    private MemoryLockRepository repository;
+    /**
+     * Checks the status of the lock
+     */
+    GET,
 
-    @BeforeEach
-    public void setUp() {
-        repository = new MemoryLockRepository();
-    }
+    /**
+     * Acquires the lock
+     */
+    ACQUIRE,
 
-    @Test
-    public void getLockTest() {
-        Lock lock = this.repository.getLock("foo", "bar");
-        assertNull(lock);
-    }
+    /**
+     * Renews the lock
+     */
+    RENEW,
+
+    /**
+     * Releases the lock
+     */
+    RELEASE,
+
+    /**
+     * The lock action failed
+     */
+    FAILED,
+
+    /**
+     * The lock action succeeded
+     */
+    SUCCESS,
+
+    ;
 }

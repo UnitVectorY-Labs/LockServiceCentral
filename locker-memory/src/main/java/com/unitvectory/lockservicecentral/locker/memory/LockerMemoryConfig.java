@@ -11,38 +11,23 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.unitvectory.lockservicecentral.locker.firestore.config;
+package com.unitvectory.lockservicecentral.locker.memory;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import com.google.cloud.firestore.Firestore;
-import com.google.cloud.firestore.FirestoreOptions;
+import com.unitvectory.lockservicecentral.locker.LockService;
 
 /**
- * The data model config for GCP Firestore
+ * The Configuration for the Memory LockService.
  * 
  * @author Jared Hatfield (UnitVectorY Labs)
  */
 @Configuration
-public class LockerGcpFirestoreConfig {
-
-	@Value("${google.cloud.project:#{null}}")
-	private String projectId;
-
-	@Value("${locker.firestore.database:(default)}")
-	private String firestoreDatabase;
+public class LockerMemoryConfig {
 
 	@Bean
-	public Firestore firestore() {
-		FirestoreOptions.Builder builder = FirestoreOptions.getDefaultInstance().toBuilder()
-				.setDatabaseId(this.firestoreDatabase);
-
-		if (this.projectId != null) {
-			builder.setProjectId(this.projectId);
-		}
-
-		return builder.build().getService();
+	public LockService lockService() {
+		return new MemoryLockService();
 	}
 }

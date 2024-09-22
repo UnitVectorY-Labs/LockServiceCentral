@@ -25,8 +25,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.unitvectory.jsonschema4springboot.ValidateJsonSchema;
 import com.unitvectory.jsonschema4springboot.ValidateJsonSchemaVersion;
-import com.unitvectory.lockservicecentral.api.service.LockService;
-import com.unitvectory.lockservicecentral.locker.model.Lock;
+import com.unitvectory.lockservicecentral.api.service.LockManagerService;
+import com.unitvectory.lockservicecentral.locker.Lock;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
@@ -42,7 +42,7 @@ import lombok.NonNull;
 public class LockController {
 
     @Autowired
-    private LockService lockService;
+    private LockManagerService lockManagerService;
 
     /**
      * Gets the status of a lock.
@@ -60,7 +60,7 @@ public class LockController {
             @Valid @PathVariable @Pattern(regexp = "^[a-zA-Z0-9_-]+$", message = "Namespace must be alphanumeric with dashes and underscores only") @Size(min = 3, max = 64, message = "Namespace must be between 3 and 64 characters long") String namespace,
             @Valid @PathVariable @Pattern(regexp = "^[a-zA-Z0-9_-]+$", message = "Lock name must be alphanumeric with dashes and underscores only") @Size(min = 3, max = 64, message = "Lock name must be between 3 and 64 characters long") String lockName) {
 
-        Lock lock = lockService.getLock(namespace, lockName);
+        Lock lock = lockManagerService.getLock(namespace, lockName);
 
         return ResponseEntity.ok(lock);
     }
@@ -83,7 +83,7 @@ public class LockController {
 
         this.setLockAttributes(lock, namespace, lockName, jwt);
 
-        Lock acquiredLock = lockService.acquireLock(lock);
+        Lock acquiredLock = lockManagerService.acquireLock(lock);
 
         return acquiredLock.getSuccess() ? ResponseEntity.ok(acquiredLock)
                 : ResponseEntity.status(HttpStatus.LOCKED).body(acquiredLock);
@@ -107,7 +107,7 @@ public class LockController {
 
         this.setLockAttributes(lock, namespace, lockName, jwt);
 
-        Lock renewedLock = lockService.renewLock(lock);
+        Lock renewedLock = lockManagerService.renewLock(lock);
 
         return renewedLock.getSuccess() ? ResponseEntity.ok(renewedLock)
                 : ResponseEntity.status(HttpStatus.LOCKED).body(renewedLock);
@@ -131,7 +131,7 @@ public class LockController {
 
         this.setLockAttributes(lock, namespace, lockName, jwt);
 
-        Lock releasedLock = lockService.releaseLock(lock);
+        Lock releasedLock = lockManagerService.releaseLock(lock);
 
         return releasedLock.getSuccess() ? ResponseEntity.ok(releasedLock)
                 : ResponseEntity.status(HttpStatus.LOCKED).body(releasedLock);

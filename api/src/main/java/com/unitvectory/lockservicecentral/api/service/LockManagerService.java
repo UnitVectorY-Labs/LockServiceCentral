@@ -18,9 +18,9 @@ import java.time.Instant;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.unitvectory.lockservicecentral.locker.model.Lock;
-import com.unitvectory.lockservicecentral.locker.model.LockAction;
-import com.unitvectory.lockservicecentral.locker.repository.LockRepository;
+import com.unitvectory.lockservicecentral.locker.Lock;
+import com.unitvectory.lockservicecentral.locker.LockAction;
+import com.unitvectory.lockservicecentral.locker.LockService;
 
 import lombok.NonNull;
 
@@ -30,10 +30,10 @@ import lombok.NonNull;
  * @author Jared Hatfield (UnitVectorY Labs)
  */
 @Service
-public class LockService {
+public class LockManagerService {
 
     @Autowired
-    private LockRepository lockRepository;
+    private LockService lockService;
 
     /**
      * Get the current time.
@@ -57,7 +57,7 @@ public class LockService {
         lock.setLockName(lockName);
         lock.setAction(LockAction.GET);
 
-        Lock activeLock = lockRepository.getLock(namespace, lockName);
+        Lock activeLock = lockService.getLock(namespace, lockName);
 
         if (activeLock != null) {
             lock = activeLock;
@@ -85,7 +85,7 @@ public class LockService {
         long expiry = now + lock.getLeaseDuration();
         lock.setExpiry(expiry);
 
-        return lockRepository.acquireLock(lock, now);
+        return lockService.acquireLock(lock, now);
     }
 
     /**
@@ -102,7 +102,7 @@ public class LockService {
         long expiry = now + lock.getLeaseDuration();
         lock.setExpiry(expiry);
 
-        return lockRepository.renewLock(lock, now);
+        return lockService.renewLock(lock, now);
     }
 
     /**
@@ -117,6 +117,6 @@ public class LockService {
         // The current time is used to release the lock
         long now = getNow();
 
-        return lockRepository.releaseLock(lock, now);
+        return lockService.releaseLock(lock, now);
     }
 }

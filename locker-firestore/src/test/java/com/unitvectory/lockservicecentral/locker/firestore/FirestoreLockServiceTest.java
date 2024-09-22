@@ -11,7 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.unitvectory.lockservicecentral.locker.firestore.repository;
+package com.unitvectory.lockservicecentral.locker.firestore;
 
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.mock;
@@ -26,19 +26,19 @@ import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
-import com.unitvectory.lockservicecentral.locker.model.Lock;
+import com.unitvectory.lockservicecentral.locker.Lock;
 
 /**
- * The FirestoreLockRepository test.
+ * The FirestoreLockService test.
  * 
  * @author Jared Hatfield (UnitVectorY Labs)
  */
-public class FirestoreLockRepositoryTest {
+public class FirestoreLockServiceTest {
 
     @Test
     public void getLockTest() throws InterruptedException, ExecutionException {
         Firestore mockFirestore = mock(Firestore.class);
-        FirestoreLockRepository repository = new FirestoreLockRepository(mockFirestore, "locks");
+        FirestoreLockService service = new FirestoreLockService(mockFirestore, "locks");
 
         // Mock the CollectionReference
         CollectionReference mockCollectionRef = mock(CollectionReference.class);
@@ -59,7 +59,7 @@ public class FirestoreLockRepositoryTest {
         when(mockFuture.get()).thenReturn(mockSnapshot);
 
         // Call the method under test
-        Lock lock = repository.getLock("foo", "bar");
+        Lock lock = service.getLock("foo", "bar");
 
         // Verify the result
         assertNull(lock);

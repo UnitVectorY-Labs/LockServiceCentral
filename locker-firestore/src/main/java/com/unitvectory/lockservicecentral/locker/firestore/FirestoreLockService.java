@@ -11,7 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.unitvectory.lockservicecentral.locker.firestore.repository;
+package com.unitvectory.lockservicecentral.locker.firestore;
 
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -20,21 +20,21 @@ import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.Transaction;
-import com.unitvectory.lockservicecentral.locker.model.Lock;
-import com.unitvectory.lockservicecentral.locker.repository.LockRepository;
+import com.unitvectory.lockservicecentral.locker.Lock;
+import com.unitvectory.lockservicecentral.locker.LockService;
 
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * The data model config for GCP Firestore
+ * The Firestore LockService.
  * 
  * @author Jared Hatfield (UnitVectorY Labs)
  */
 @AllArgsConstructor
 @Slf4j
-public class FirestoreLockRepository implements LockRepository {
+public class FirestoreLockService implements LockService {
 
     private Firestore firestore;
 

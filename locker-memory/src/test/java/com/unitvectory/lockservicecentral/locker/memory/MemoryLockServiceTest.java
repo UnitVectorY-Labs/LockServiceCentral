@@ -11,24 +11,33 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.unitvectory.lockservicecentral.locker.memory.config;
+package com.unitvectory.lockservicecentral.locker.memory;
 
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
-import com.unitvectory.lockservicecentral.locker.memory.repository.MemoryLockRepository;
-import com.unitvectory.lockservicecentral.locker.repository.LockRepository;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import com.unitvectory.lockservicecentral.locker.Lock;
+import com.unitvectory.lockservicecentral.locker.LockService;
 
 /**
- * The data model config for Memory
+ * The MemoryLockService test.
  * 
  * @author Jared Hatfield (UnitVectorY Labs)
  */
-@Configuration
-public class LockerMemoryConfig {
+public class MemoryLockServiceTest {
 
-	@Bean
-	public LockRepository lockRepository() {
-		return new MemoryLockRepository();
-	}
+    private LockService lockService;
+
+    @BeforeEach
+    public void setUp() {
+        lockService = new MemoryLockService();
+    }
+
+    @Test
+    public void getLockTest() {
+        Lock lock = this.lockService.getLock("foo", "bar");
+        assertNull(lock);
+    }
 }

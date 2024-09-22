@@ -11,23 +11,23 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.unitvectory.lockservicecentral.locker.memory.repository;
+package com.unitvectory.lockservicecentral.locker.memory;
 
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.unitvectory.lockservicecentral.locker.model.Lock;
-import com.unitvectory.lockservicecentral.locker.repository.LockRepository;
+import com.unitvectory.lockservicecentral.locker.Lock;
+import com.unitvectory.lockservicecentral.locker.LockService;
 
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * The data model config for Memory
+ * The Memory based LockService.
  * 
  * @author Jared Hatfield (UnitVectorY Labs)
  */
 @Slf4j
-public class MemoryLockRepository implements LockRepository {
+public class MemoryLockService implements LockService {
 
     private final ConcurrentHashMap<String, Lock> locks = new ConcurrentHashMap<>();
 
