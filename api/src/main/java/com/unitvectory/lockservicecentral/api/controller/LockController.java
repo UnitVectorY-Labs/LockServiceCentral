@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.unitvectory.jsonschema4springboot.ValidateJsonSchema;
 import com.unitvectory.jsonschema4springboot.ValidateJsonSchemaVersion;
 import com.unitvectory.lockservicecentral.api.service.LockService;
-import com.unitvectory.lockservicecentral.datamodel.model.Lock;
+import com.unitvectory.lockservicecentral.locker.model.Lock;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;

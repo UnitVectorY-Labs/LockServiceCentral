@@ -16,19 +16,19 @@
 
     <modules>
         <module>api</module>
-        <module>datamodel</module>
+        <module>locker</module>
     </modules>
     <profiles>
         <profile>
             <id>memory</id>
             <modules>
-                <module>datamodel-memory</module>
+                <module>locker-memory</module>
             </modules>
         </profile>
         <profile>
             <id>firestore</id>
             <modules>
-                <module>datamodel-firestore</module>
+                <module>locker-firestore</module>
             </modules>
         </profile>
     </profiles>

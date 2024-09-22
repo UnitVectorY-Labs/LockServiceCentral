@@ -19,7 +19,7 @@
     <dependencies>
         <dependency>
             <groupId>com.unitvectory.lockservicecentral</groupId>
-            <artifactId>datamodel</artifactId>
+            <artifactId>locker</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -72,7 +72,7 @@
             <dependencies>
                 <dependency>
                     <groupId>com.unitvectory.lockservicecentral</groupId>
-                    <artifactId>datamodel-memory</artifactId>
+                    <artifactId>locker-memory</artifactId>
                     <version>${project.version}</version>
                     <scope>runtime</scope>
                 </dependency>
@@ -83,7 +83,7 @@
             <dependencies>
                 <dependency>
                     <groupId>com.unitvectory.lockservicecentral</groupId>
-                    <artifactId>datamodel-firestore</artifactId>
+                    <artifactId>locker-firestore</artifactId>
                     <version>${project.version}</version>
                     <scope>runtime</scope>
                 </dependency>

@@ -47,4 +47,4 @@ jobs:
         platforms: linux/amd64,linux/arm64
         tags: ghcr.io/${{ env.REPO_LC }}-${{ matrix.tag }}:dev
         build-args: |
-          DATAMODEL=${{ matrix.profile }}
+          LOCKER=${{ matrix.profile }}

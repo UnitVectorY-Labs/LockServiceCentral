@@ -18,9 +18,9 @@ import java.time.Instant;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.unitvectory.lockservicecentral.datamodel.model.Lock;
-import com.unitvectory.lockservicecentral.datamodel.model.LockAction;
-import com.unitvectory.lockservicecentral.datamodel.repository.LockRepository;
+import com.unitvectory.lockservicecentral.locker.model.Lock;
+import com.unitvectory.lockservicecentral.locker.model.LockAction;
+import com.unitvectory.lockservicecentral.locker.repository.LockRepository;
 
 import lombok.NonNull;
 
