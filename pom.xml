@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.unitvectory</groupId>
     <artifactId>lockservicecentral</artifactId>
@@ -19,6 +21,15 @@
         <module>locker</module>
     </modules>
     <profiles>
+        <!-- The 'everything' profile builds all of the lockers for testing -->
+        <profile>
+            <id>everything</id>
+            <modules>
+                <module>locker-memory</module>
+                <module>locker-firestore</module>
+            </modules>
+        </profile>
+        <!-- Each locker specific profile will build the API with that implementation embedded-->
         <profile>
             <id>memory</id>
             <modules>
@@ -106,17 +117,17 @@
                 </executions>
             </plugin>
             <plugin>
-	            <groupId>org.apache.maven.plugins</groupId>
-	            <artifactId>maven-javadoc-plugin</artifactId>
-	            <executions>
-	                <execution>
-	                    <id>attach-javadocs</id>
-	                    <goals>
-	                        <goal>jar</goal>
-	                    </goals>
-	                </execution>
-	            </executions>
-	        </plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 </project>

@@ -67,6 +67,7 @@
     </dependencies>
 
     <profiles>
+        <!-- Each locker specific profile is included as a runtime dependency separately-->
         <profile>
             <id>memory</id>
             <dependencies>
