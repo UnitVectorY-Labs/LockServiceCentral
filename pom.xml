@@ -19,6 +19,7 @@
     <modules>
         <module>api</module>
         <module>locker</module>
+        <module>locker-tests</module>
     </modules>
     <profiles>
         <!-- The 'everything' profile builds all of the lockers for testing -->

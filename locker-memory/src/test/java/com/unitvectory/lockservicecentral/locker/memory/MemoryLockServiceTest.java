@@ -13,31 +13,18 @@
  */
 package com.unitvectory.lockservicecentral.locker.memory;
 
-import static org.junit.jupiter.api.Assertions.assertNull;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
-import com.unitvectory.lockservicecentral.locker.Lock;
 import com.unitvectory.lockservicecentral.locker.LockService;
+import com.unitvectory.lockservicecentral.locker.tests.AbstractLockerTest;
 
 /**
  * The MemoryLockService test.
  * 
  * @author Jared Hatfield (UnitVectorY Labs)
  */
-public class MemoryLockServiceTest {
+public class MemoryLockServiceTest extends AbstractLockerTest {
 
-    private LockService lockService;
-
-    @BeforeEach
-    public void setUp() {
-        lockService = new MemoryLockService();
-    }
-
-    @Test
-    public void getLockTest() {
-        Lock lock = this.lockService.getLock("foo", "bar");
-        assertNull(lock);
+    @Override
+    protected LockService createLockService() {
+        return new MemoryLockService();
     }
 }
