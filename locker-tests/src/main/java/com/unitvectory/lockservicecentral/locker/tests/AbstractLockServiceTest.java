@@ -375,4 +375,28 @@ public abstract class AbstractLockServiceTest {
         assertNull(released.getExpiry());
     }
 
+    @Test
+    public void releaseLockSuccess() {
+        // First we need to create a lock
+        String name = UUID.randomUUID().toString();
+        long now = this.getNow();
+        Lock lock = new Lock(LockAction.ACQUIRE, null, "junit", name, "owner", "instance", 60L, now + 60);
+        Lock acquired = this.lockService.acquireLock(lock, now);
+        assertNotNull(acquired);
+
+        // Now we want to release the lock we made
+        now += 1;
+        Lock lock2 = new Lock(LockAction.RELEASE, null, "junit", name, "owner", "instance", null, null);
+        Lock released = this.lockService.releaseLock(lock2, now);
+        assertNotNull(released);
+
+        assertEquals(LockAction.SUCCESS, released.getAction());
+        assertTrue(released.getSuccess());
+        assertEquals("junit", released.getNamespace());
+        assertEquals(name, released.getLockName());
+        assertNull(released.getOwner());
+        assertNull(released.getInstanceId());
+        assertNull(released.getLeaseDuration());
+        assertNull(released.getExpiry());
+    }
 }

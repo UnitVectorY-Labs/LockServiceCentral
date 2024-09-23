@@ -19,6 +19,7 @@ import com.unitvectory.lockservicecentral.locker.Lock;
 import com.unitvectory.lockservicecentral.locker.LockService;
 
 import lombok.NonNull;
+import lombok.Synchronized;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -56,6 +57,7 @@ public class MemoryLockService implements LockService {
      * @return The lock instance or null if it does not exist
      */
     @Override
+    @Synchronized("locks")
     public Lock getLock(@NonNull String namespace, @NonNull String lockName) {
         String key = generateKey(namespace, lockName);
         Lock lock = locks.get(key);
@@ -74,6 +76,7 @@ public class MemoryLockService implements LockService {
      * @return The lock response indicating success or failure
      */
     @Override
+    @Synchronized("locks")
     public Lock acquireLock(@NonNull Lock lock, long now) {
         String key = generateKey(lock.getNamespace(), lock.getLockName());
 
@@ -108,6 +111,7 @@ public class MemoryLockService implements LockService {
      * @return The renewed lock or failure if it cannot be renewed
      */
     @Override
+    @Synchronized("locks")
     public Lock renewLock(@NonNull Lock lock, long now) {
         String key = generateKey(lock.getNamespace(), lock.getLockName());
 
@@ -143,6 +147,7 @@ public class MemoryLockService implements LockService {
      * @return The released lock or failure if it cannot be released
      */
     @Override
+    @Synchronized("locks")
     public Lock releaseLock(@NonNull Lock lock, long now) {
         String key = generateKey(lock.getNamespace(), lock.getLockName());
 
@@ -150,8 +155,10 @@ public class MemoryLockService implements LockService {
         Lock existingLock = get(key);
         if (existingLock == null || existingLock.isExpired(now)) {
             // Lock is expired, so it is already released
+            locks.remove(key);
             lock.setCleared();
             log.info("Lock released: {}", lock);
+            return lock.copy();
         } else if (!lock.isMatch(existingLock)) {
             log.warn("Cannot release lock: {}", lock);
             lock.setFailed();
