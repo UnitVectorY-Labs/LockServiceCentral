@@ -38,6 +38,16 @@ public class MemoryLockService implements LockService {
         copy.setSuccess(null);
         locks.put(key, copy);
     }
+
+    private Lock get(String key) {
+        Lock lock = locks.get(key);
+        if (lock != null) {
+            return lock.copy();
+        }
+
+        return null;
+    }
+
     /**
      * Get a lock by namespace and lock name.
      * 
@@ -46,7 +56,7 @@ public class MemoryLockService implements LockService {
      * @return The lock instance or null if it does not exist
      */
     @Override
-    public Lock getLock(String namespace, String lockName) {
+    public Lock getLock(@NonNull String namespace, @NonNull String lockName) {
         String key = generateKey(namespace, lockName);
         Lock lock = locks.get(key);
         if (lock == null) {
@@ -68,7 +78,7 @@ public class MemoryLockService implements LockService {
         String key = generateKey(lock.getNamespace(), lock.getLockName());
 
         // If a lock exists, check if it's still valid
-        Lock existingLock = locks.get(key);
+        Lock existingLock = get(key);
         if (existingLock != null) {
             // If the lock is active and belongs to the same instance, replace it
             if (existingLock.isMatch(lock) || existingLock.isExpired(now)) {
@@ -102,7 +112,7 @@ public class MemoryLockService implements LockService {
         String key = generateKey(lock.getNamespace(), lock.getLockName());
 
         // Check if the lock exists and is still valid
-        Lock existingLock = locks.get(key);
+        Lock existingLock = get(key);
         if (existingLock == null || !existingLock.isActive(now) || !lock.isMatch(existingLock)) {
             log.warn("Cannot renew lock: {}", lock);
             lock.setFailed();
@@ -137,7 +147,7 @@ public class MemoryLockService implements LockService {
         String key = generateKey(lock.getNamespace(), lock.getLockName());
 
         // Check if the lock exists and matches the request
-        Lock existingLock = locks.get(key);
+        Lock existingLock = get(key);
         if (existingLock == null || existingLock.isExpired(now)) {
             // Lock is expired, so it is already released
             lock.setCleared();
