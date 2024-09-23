@@ -231,6 +231,31 @@ public abstract class AbstractLockServiceTest {
     }
 
     @Test
+    public void renewLockNotMatchFailedTest() {
+        // First we need to create a lock
+        String name = UUID.randomUUID().toString();
+        long now = this.getNow();
+        Lock lock = new Lock(LockAction.ACQUIRE, null, "junit", name, "owner", "instance", 60L, now + 60);
+        Lock acquired = this.lockService.acquireLock(lock, now);
+        assertNotNull(acquired);
+
+        // Now we want to renew the lock we made
+        now += 1;
+        Lock lock2 = new Lock(LockAction.RENEW, null, "junit", name, "owner2", "instance", 60L, now + 60);
+        Lock renewed = this.lockService.renewLock(lock2, now);
+        assertNotNull(renewed);
+
+        assertEquals(LockAction.FAILED, renewed.getAction());
+        assertFalse(renewed.getSuccess());
+        assertEquals("junit", renewed.getNamespace());
+        assertEquals(name, renewed.getLockName());
+        assertNull(renewed.getOwner());
+        assertNull(renewed.getInstanceId());
+        assertNull(renewed.getLeaseDuration());
+        assertNull(renewed.getExpiry());
+    }
+
+    @Test
     public void renewLockSuccessTest() {
         // First we need to create a lock
         String name = UUID.randomUUID().toString();
@@ -256,7 +281,7 @@ public abstract class AbstractLockServiceTest {
     }
 
     @Test
-    public void rewnewLockExpiredFailed(){
+    public void rewnewLockExpiredFailed() {
         // First we need to create a lock
         String name = UUID.randomUUID().toString();
         long now = this.getNow() - 100;
@@ -301,10 +326,34 @@ public abstract class AbstractLockServiceTest {
     }
 
     @Test
+    public void releaseLockNotMatchFailedTest() {
+        // First we need to create a lock
+        String name = UUID.randomUUID().toString();
+        long now = this.getNow();
+        Lock lock = new Lock(LockAction.ACQUIRE, null, "junit", name, "owner", "instance", 60L, now + 60);
+        Lock acquired = this.lockService.acquireLock(lock, now);
+        assertNotNull(acquired);
+
+        // Now we want to release the lock we made
+        now += 1;
+        Lock lock2 = new Lock(LockAction.RELEASE, null, "junit", name, "owner2", "instance", null, null);
+        Lock released = this.lockService.releaseLock(lock2, now);
+        assertNotNull(released);
+
+        assertEquals(LockAction.FAILED, released.getAction());
+        assertFalse(released.getSuccess());
+        assertEquals("junit", released.getNamespace());
+        assertEquals(name, released.getLockName());
+        assertNull(released.getOwner());
+        assertNull(released.getInstanceId());
+        assertNull(released.getLeaseDuration());
+        assertNull(released.getExpiry());
+    }
+
+    @Test
     public void releaseLockExpiredTest() {
         // First we need to create a lock
         String name = UUID.randomUUID().toString();
-        name = "broken";
         long now = this.getNow();
         Lock lock = new Lock(LockAction.ACQUIRE, null, "junit", name, "owner", "other", 60L, now + 60);
         Lock acquired = this.lockService.acquireLock(lock, now);
