@@ -97,10 +97,8 @@ public class LockManagerService {
     public Lock renewLock(@NonNull Lock lock) {
         lock.setAction(LockAction.RENEW);
 
-        // Calculate the expiry based on the current time and lease duration
+        // The current time is used to renew the lock
         long now = getNow();
-        long expiry = now + lock.getLeaseDuration();
-        lock.setExpiry(expiry);
 
         return lockService.renewLock(lock, now);
     }
