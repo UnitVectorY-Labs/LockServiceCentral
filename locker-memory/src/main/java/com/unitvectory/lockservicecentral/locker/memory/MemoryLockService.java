@@ -152,7 +152,7 @@ public class MemoryLockService implements LockService {
             // Lock is expired, so it is already released
             lock.setCleared();
             log.info("Lock released: {}", lock);
-        } else if (existingLock == null || !lock.isMatch(existingLock)) {
+        } else if (!lock.isMatch(existingLock)) {
             log.warn("Cannot release lock: {}", lock);
             lock.setFailed();
             return lock;

@@ -201,7 +201,7 @@ public class FirestoreLockService implements LockService {
                 } else {
                     Lock existingLock = new Lock(snapshot.getData());
 
-                    if (lock.isExpired(now)) {
+                    if (existingLock.isExpired(now)) {
                         // Lock is expired, so it is already released
                         lock.setCleared();
                         log.info("Lock released: {}", lock);
