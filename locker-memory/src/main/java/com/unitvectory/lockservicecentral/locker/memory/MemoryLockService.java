@@ -78,6 +78,7 @@ public class MemoryLockService implements LockService {
     @Override
     @Synchronized("locks")
     public Lock acquireLock(@NonNull Lock lock, long now) {
+        lock = lock.copy();
         String key = generateKey(lock.getNamespace(), lock.getLockName());
 
         // If a lock exists, check if it's still valid
@@ -113,6 +114,7 @@ public class MemoryLockService implements LockService {
     @Override
     @Synchronized("locks")
     public Lock renewLock(@NonNull Lock lock, long now) {
+        lock = lock.copy();
         String key = generateKey(lock.getNamespace(), lock.getLockName());
 
         // Check if the lock exists and is still valid
@@ -149,6 +151,7 @@ public class MemoryLockService implements LockService {
     @Override
     @Synchronized("locks")
     public Lock releaseLock(@NonNull Lock lock, long now) {
+        lock = lock.copy();
         String key = generateKey(lock.getNamespace(), lock.getLockName());
 
         // Check if the lock exists and matches the request

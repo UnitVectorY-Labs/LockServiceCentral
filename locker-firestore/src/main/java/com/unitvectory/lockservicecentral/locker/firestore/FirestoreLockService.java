@@ -60,7 +60,14 @@ public class FirestoreLockService implements LockService {
     }
 
     @Override
-    public Lock acquireLock(@NonNull Lock lock, long now) {
+    public Lock acquireLock(@NonNull Lock originalLock, long now) {
+        Lock lock = originalLock.copy();
+        Map<String, Object> data = lock.toMap();
+
+        // Set the Firestore specific TTL attribute
+        Timestamp ttl = Timestamp.ofTimeSecondsAndNanos(lock.getExpiry(), 0);
+        data.put("ttl", ttl);
+
         // Firestore document reference for the lock, structured by namespace and lock
         // name.
         String documentId = lock.getNamespace() + ":" + lock.getLockName();
@@ -73,13 +80,7 @@ public class FirestoreLockService implements LockService {
                 var snapshot = transaction.get(docRef).get();
 
                 if (!snapshot.exists()) {
-                    // Write the lock to Firestore
-                    Map<String, Object> data = lock.toMap();
-
-                    // Set the Firestore specific TTL attribute
-                    Timestamp ttl = Timestamp.ofTimeSecondsAndNanos(lock.getExpiry(), 0);
-                    data.put("ttl", ttl);
-
+                    // New record
                     transaction.set(docRef, data);
                     lock.setSuccess();
                     log.info("Lock acquired: {}", lock);
@@ -89,12 +90,6 @@ public class FirestoreLockService implements LockService {
                     if (lock.isMatch(existingLock)) {
                         // Lock is already acquired by the same owner, it can be updated with the new
                         // expiry
-                        Map<String, Object> data = lock.toMap();
-
-                        // Set the Firestore specific TTL attribute
-                        Timestamp ttl = Timestamp.ofTimeSecondsAndNanos(lock.getExpiry(), 0);
-                        data.put("ttl", ttl);
-
                         transaction.set(docRef, data);
                         lock.setSuccess();
                         log.info("Lock already acquired: {}", lock);
@@ -105,12 +100,6 @@ public class FirestoreLockService implements LockService {
                         log.warn("Lock conflict, cannot acquire: {}", lock);
                     } else {
                         // Lock is expired, so we can acquire it
-                        Map<String, Object> data = lock.toMap();
-
-                        // Set the Firestore specific TTL attribute
-                        Timestamp ttl = Timestamp.ofTimeSecondsAndNanos(lock.getExpiry(), 0);
-                        data.put("ttl", ttl);
-
                         transaction.set(docRef, data);
                         lock.setSuccess();
                         log.info("Lock acquired: {}", lock);
@@ -127,7 +116,9 @@ public class FirestoreLockService implements LockService {
     }
 
     @Override
-    public Lock renewLock(@NonNull Lock lock, long now) {
+    public Lock renewLock(@NonNull Lock originalLock, long now) {
+        Lock lock = originalLock.copy();
+
         // Firestore document reference for the lock, structured by namespace and lock
         // name.
         String documentId = lock.getNamespace() + ":" + lock.getLockName();
@@ -183,7 +174,9 @@ public class FirestoreLockService implements LockService {
     }
 
     @Override
-    public Lock releaseLock(@NonNull Lock lock, long now) {
+    public Lock releaseLock(@NonNull Lock originalLock, long now) {
+        Lock lock = originalLock.copy();
+
         // Firestore document reference for the lock, structured by namespace and lock
         // name.
         String documentId = lock.getNamespace() + ":" + lock.getLockName();

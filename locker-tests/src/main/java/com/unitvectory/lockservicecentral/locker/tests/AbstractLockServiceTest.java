@@ -49,6 +49,216 @@ public abstract class AbstractLockServiceTest {
         this.lockService = createLockService();
     }
 
+    private void assertGetLockMatches(Lock actual, String namespace, String name, String owner, String instanceId,
+            Long leaseDuration, Long expiry) {
+        assertNotNull(actual, "The getLock must return a value when expected");
+        assertNull(actual.getAction(), "The getLock must return action as null");
+        assertNull(actual.getSuccess(), "The getLock must return success as null");
+        assertEquals(namespace, actual.getNamespace(), "The getLock namespace does not match expected");
+        assertEquals(name, actual.getLockName(), "The getLock name does not match expected");
+        assertEquals(owner, actual.getOwner(), "The getLock owner does not match expected");
+        assertEquals(instanceId, actual.getInstanceId(), "The getLock instanceId does not match expected");
+        assertEquals(leaseDuration, actual.getLeaseDuration(), "The leaseDuration does not match expected");
+        assertEquals(expiry, actual.getExpiry(), "The getLock expiry does not match expected");
+    }
+
+    public void assertAcquireLockFailed(Lock requested, Lock actual, long now) {
+        // This is just testing to make sure the test is valid
+        assertNotNull(requested,
+                "Invalid test, assertAcquireLockFailed must be provided with non-null requested lock");
+        assertEquals(LockAction.ACQUIRE, requested.getAction(),
+                "Invalid test, assertAcquireLockFailed, not passed LockAction.ACQUIRE");
+        assertNull(requested.getSuccess(), "Invalid test, assertAcquireLockFailed, not passed null success");
+        assertNotNull(requested.getNamespace(), "Invalid test, assertAcquireLockFailed, not passed namespace");
+        assertNotNull(requested.getLockName(), "Invalid test, assertAcquireLockFailed, not passed lockName");
+        assertNotNull(requested.getOwner(), "Invalid test, assertAcquireLockFailed, not passed owner");
+        assertNotNull(requested.getInstanceId(), "Invalid test, assertAcquireLockFailed, not passed instanceId");
+        assertNotNull(requested.getLeaseDuration(), "Invalid test, assertAcquireLockFailed, not passed leaseDuration");
+        assertNotNull(requested.getExpiry(), "Invalid test, assertAcquireLockFailed, not passed expiry");
+        assertEquals(requested.getLeaseDuration() + now, requested.getExpiry(),
+                "Invalid test, assertAcquireLockFailed, leaseDuration != expiry + now");
+
+        // Now actually test the response
+        assertNotNull(actual, "acquireLock must return a non-null lock");
+
+        assertEquals(LockAction.FAILED, actual.getAction(),
+                "Failed acquireLock must return a lock with action FAILED");
+        assertFalse(actual.getSuccess(), "Failed acquireLock must return a lock with success false");
+        assertEquals(requested.getNamespace(), actual.getNamespace(), "Namespace must match");
+        assertEquals(requested.getLockName(), actual.getLockName(), "LockName must match");
+        assertNull(actual.getOwner(), "Owner must be null");
+        assertNull(actual.getInstanceId(), "InstanceId must be null");
+        assertNull(actual.getLeaseDuration(), "LeaseDuration must be null");
+        assertNull(actual.getExpiry(), "Expiry must be null");
+    }
+
+    private void assertAcquireLockSuccess(Lock requested, Lock actual, long now) {
+        // This is just testing to make sure the test is valid
+        assertNotNull(requested,
+                "Invalid test, assertAcquireLockSuccess must be provided with non-null requested lock");
+        assertEquals(LockAction.ACQUIRE, requested.getAction(),
+                "Invalid test, assertAcquireLockSuccess, not passed LockAction.ACQUIRE");
+        assertNull(requested.getSuccess(), "Invalid test, assertAcquireLockSuccess, not passed null success");
+        assertNotNull(requested.getNamespace(), "Invalid test, assertAcquireLockSuccess, not passed namespace");
+        assertNotNull(requested.getLockName(), "Invalid test, assertAcquireLockSuccess, not passed lockName");
+        assertNotNull(requested.getOwner(), "Invalid test, assertAcquireLockSuccess, not passed owner");
+        assertNotNull(requested.getInstanceId(), "Invalid test, assertAcquireLockSuccess, not passed instanceId");
+        assertNotNull(requested.getLeaseDuration(), "Invalid test, assertAcquireLockSuccess, not passed leaseDuration");
+        assertNotNull(requested.getExpiry(), "Invalid test, assertAcquireLockSuccess, not passed expiry");
+        assertEquals(requested.getLeaseDuration() + now, requested.getExpiry(),
+                "Invalid test, assertAcquireLockSuccess, leaseDuration != expiry + now");
+
+        // Now actually test the response
+        assertNotNull(actual, "acquireLock must return a non-null lock");
+
+        assertEquals(LockAction.SUCCESS, actual.getAction(),
+                "Successful acquireLock must return a lock with action SUCCESS");
+        assertTrue(actual.getSuccess(), "Successful acquireLock must return a lock with success true");
+        assertEquals(requested.getNamespace(), actual.getNamespace(), "Namespace must match");
+        assertEquals(requested.getLockName(), actual.getLockName(), "LockName must match");
+        assertEquals(requested.getOwner(), actual.getOwner(), "Owner must match");
+        assertEquals(requested.getInstanceId(), actual.getInstanceId(), "InstanceId must match");
+        assertEquals(requested.getLeaseDuration(), actual.getLeaseDuration(), "LeaseDuration must match");
+        assertEquals(requested.getExpiry(), actual.getExpiry(), "Expiry must match");
+    }
+
+    private void assertRenewLockFailed(Lock requested, Lock actual, long now) {
+        // Validate the requested Lock object
+        assertNotNull(requested,
+                "Invalid test, assertRenewLockFailed must be provided with a non-null requested lock");
+        assertEquals(LockAction.RENEW, requested.getAction(),
+                "Invalid test, assertRenewLockFailed must be passed LockAction.RENEW");
+        assertNull(requested.getSuccess(),
+                "Invalid test, assertRenewLockFailed must be passed a null success field");
+        assertNotNull(requested.getNamespace(), "Invalid test, assertRenewLockFailed must be passed a namespace");
+        assertNotNull(requested.getLockName(), "Invalid test, assertRenewLockFailed must be passed a lockName");
+        assertNotNull(requested.getOwner(), "Invalid test, assertRenewLockFailed must be passed an owner");
+        assertNotNull(requested.getInstanceId(), "Invalid test, assertRenewLockFailed must be passed an instanceId");
+        assertNotNull(requested.getLeaseDuration(),
+                "Invalid test, assertRenewLockFailed must be passed a leaseDuration");
+        assertNull(requested.getExpiry(),
+                "Invalid test, assertRenewLockFailed must not pass an expiry, it is calculated based on the existing lock.");
+
+        // Validate the actual Lock object returned by renewLock
+        assertNotNull(actual, "renewLock must return a non-null lock");
+
+        assertEquals(LockAction.FAILED, actual.getAction(),
+                "Failed renewLock must return a lock with action FAILED");
+        assertFalse(actual.getSuccess(),
+                "Failed renewLock must return a lock with success set to false");
+        assertEquals(requested.getNamespace(), actual.getNamespace(), "Namespace must match");
+        assertEquals(requested.getLockName(), actual.getLockName(), "LockName must match");
+        assertNull(actual.getOwner(), "Owner must be null");
+        assertNull(actual.getInstanceId(), "InstanceId must be null");
+        assertNull(actual.getLeaseDuration(), "LeaseDuration must be null");
+        assertNull(actual.getExpiry(), "Expiry must be null");
+    }
+
+    private void assertRenewLockSuccess(Lock requested, Lock actual, long now, Long previousLockLeaseDuration,
+            Long previousLockExpiration) {
+        // Validate the requested Lock object
+        assertNotNull(requested,
+                "Invalid test, assertRenewLockSuccess must be provided with a non-null requested lock");
+        assertEquals(LockAction.RENEW, requested.getAction(),
+                "Invalid test, assertRenewLockSuccess must be passed LockAction.RENEW");
+        assertNull(requested.getSuccess(),
+                "Invalid test, assertRenewLockSuccess must be passed a null success field");
+        assertNotNull(requested.getNamespace(), "Invalid test, assertRenewLockSuccess must be passed a namespace");
+        assertNotNull(requested.getLockName(), "Invalid test, assertRenewLockSuccess must be passed a lockName");
+        assertNotNull(requested.getOwner(), "Invalid test, assertRenewLockSuccess must be passed an owner");
+        assertNotNull(requested.getInstanceId(), "Invalid test, assertRenewLockSuccess must be passed an instanceId");
+        assertNotNull(requested.getLeaseDuration(),
+                "Invalid test, assertRenewLockSuccess must be passed a leaseDuration");
+        assertNull(requested.getExpiry(),
+                "Invalid test, assertRenewLockSuccess must not pass an expiry, it is calculated based on the existing lock.");
+
+        // Validate the actual Lock object returned by renewLock
+        assertNotNull(actual, "renewLock must return a non-null lock");
+
+        assertEquals(LockAction.SUCCESS, actual.getAction(),
+                "Successful renewLock must return a lock with action SUCCESS");
+        assertTrue(actual.getSuccess(),
+                "Successful renewLock must return a lock with success set to true");
+        assertEquals(requested.getNamespace(), actual.getNamespace(), "Namespace must match");
+        assertEquals(requested.getLockName(), actual.getLockName(), "LockName must match");
+        assertEquals(requested.getOwner(), actual.getOwner(), "Owner must match");
+        assertEquals(requested.getInstanceId(), actual.getInstanceId(), "InstanceId must match");
+        if (previousLockLeaseDuration != null) {
+            assertEquals(previousLockLeaseDuration + requested.getLeaseDuration(), actual.getLeaseDuration(),
+                    "LeaseDuration must match the requested leaseDuration");
+        }
+        if (previousLockExpiration != null) {
+            assertEquals(previousLockExpiration + requested.getLeaseDuration(), actual.getExpiry(),
+                    "Expiry must match the requested expiry");
+        }
+    }
+
+    private void assertReleaseLockFailed(Lock requested, Lock actual) {
+        // Validate the requested Lock object
+        assertNotNull(requested,
+                "Invalid test, assertReleaseLockFailed must be provided with a non-null requested lock");
+        assertEquals(LockAction.RELEASE, requested.getAction(),
+                "Invalid test, assertReleaseLockFailed must be passed LockAction.RELEASE");
+        assertNull(requested.getSuccess(),
+                "Invalid test, assertReleaseLockFailed must be passed a null success field");
+        assertNotNull(requested.getNamespace(), "Invalid test, assertReleaseLockFailed must be passed a namespace");
+        assertNotNull(requested.getLockName(), "Invalid test, assertReleaseLockFailed must be passed a lockName");
+        assertNotNull(requested.getOwner(), "Invalid test, assertReleaseLockFailed must be passed an owner");
+        assertNotNull(requested.getInstanceId(), "Invalid test, assertReleaseLockFailed must be passed an instanceId");
+        // For release actions, leaseDuration and expiry are null
+        assertNull(requested.getLeaseDuration(),
+                "Invalid test, assertReleaseLockFailed must have leaseDuration as null");
+        assertNull(requested.getExpiry(),
+                "Invalid test, assertReleaseLockFailed must have expiry as null");
+
+        // Validate the actual Lock object returned by releaseLock
+        assertNotNull(actual, "releaseLock must return a non-null lock");
+
+        assertEquals(LockAction.FAILED, actual.getAction(),
+                "Failed releaseLock must return a lock with action FAILED");
+        assertFalse(actual.getSuccess(),
+                "Failed releaseLock must return a lock with success set to false");
+        assertEquals(requested.getNamespace(), actual.getNamespace(), "Namespace must match");
+        assertEquals(requested.getLockName(), actual.getLockName(), "LockName must match");
+        assertNull(actual.getOwner(), "After release, owner should be null");
+        assertNull(actual.getInstanceId(), "After release, instanceId should be null");
+        assertNull(actual.getLeaseDuration(), "After release, leaseDuration should be null");
+        assertNull(actual.getExpiry(), "After release, expiry should be null");
+    }
+
+    private void assertReleaseLockSuccess(Lock requested, Lock actual) {
+        // Validate the requested Lock object
+        assertNotNull(requested,
+                "Invalid test, assertReleaseLockSuccess must be provided with a non-null requested lock");
+        assertEquals(LockAction.RELEASE, requested.getAction(),
+                "Invalid test, assertReleaseLockSuccess must be passed LockAction.RELEASE");
+        assertNull(requested.getSuccess(),
+                "Invalid test, assertReleaseLockSuccess must be passed a null success field");
+        assertNotNull(requested.getNamespace(), "Invalid test, assertReleaseLockSuccess must be passed a namespace");
+        assertNotNull(requested.getLockName(), "Invalid test, assertReleaseLockSuccess must be passed a lockName");
+        assertNotNull(requested.getOwner(), "Invalid test, assertReleaseLockSuccess must be passed an owner");
+        assertNotNull(requested.getInstanceId(), "Invalid test, assertReleaseLockSuccess must be passed an instanceId");
+        // For release actions, leaseDuration and expiry are null
+        assertNull(requested.getLeaseDuration(),
+                "Invalid test, assertReleaseLockSuccess must have leaseDuration as null");
+        assertNull(requested.getExpiry(),
+                "Invalid test, assertReleaseLockSuccess must have expiry as null");
+
+        // Validate the actual Lock object returned by releaseLock
+        assertNotNull(actual, "releaseLock must return a non-null lock");
+
+        assertEquals(LockAction.SUCCESS, actual.getAction(),
+                "Successful releaseLock must return a lock with action SUCCESS");
+        assertTrue(actual.getSuccess(),
+                "Successful releaseLock must return a lock with success set to true");
+        assertEquals(requested.getNamespace(), actual.getNamespace(), "Namespace must match");
+        assertEquals(requested.getLockName(), actual.getLockName(), "LockName must match");
+        assertNull(actual.getOwner(), "After release, owner should be null");
+        assertNull(actual.getInstanceId(), "After release, instanceId should be null");
+        assertNull(actual.getLeaseDuration(), "After release, leaseDuration should be null");
+        assertNull(actual.getExpiry(), "After release, expiry should be null");
+    }
+
     @Test
     public void getLockNullNamespaceTest() {
         assertThrows(NullPointerException.class, () -> {
@@ -86,11 +296,9 @@ public abstract class AbstractLockServiceTest {
 
     @Test
     public void getLockNotFoundTest() {
-        // If we try to get a lock that does not exist (by generating a random lock
-        // name), we should get back null.
         String name = UUID.randomUUID().toString();
         Lock lock = this.lockService.getLock("junit", name);
-        assertNull(lock);
+        assertNull(lock, "Non-existent lock should return null");
     }
 
     @Test
@@ -100,20 +308,11 @@ public abstract class AbstractLockServiceTest {
         long now = this.getNow();
         Lock lock = new Lock(LockAction.ACQUIRE, null, "junit", name, "owner", "instance", 60L, now + 60);
         Lock acquired = this.lockService.acquireLock(lock, now);
-        assertNotNull(acquired);
+        assertAcquireLockSuccess(lock, acquired, now);
 
         // Now we want to get the lock we made
         Lock found = this.lockService.getLock("junit", name);
-        assertNotNull(found);
-
-        assertNull(found.getAction());
-        assertNull(found.getSuccess());
-        assertEquals("junit", found.getNamespace());
-        assertEquals(name, found.getLockName());
-        assertEquals("owner", found.getOwner());
-        assertEquals("instance", found.getInstanceId());
-        assertEquals(60L, found.getLeaseDuration());
-        assertEquals(now + 60, found.getExpiry());
+        assertGetLockMatches(found, "junit", name, "owner", "instance", 60L, now + 60L);
     }
 
     @Test
@@ -124,21 +323,21 @@ public abstract class AbstractLockServiceTest {
         // Acquire Lock
         Lock acquireLock = new Lock(LockAction.ACQUIRE, null, "junit", name, "owner", "instance", 60L, now + 60);
         Lock acquired = lockService.acquireLock(acquireLock, now);
-        assertTrue(acquired.getSuccess());
+        assertAcquireLockSuccess(acquireLock, acquired, now);
 
         // Renew Lock
-        Lock renewLock = new Lock(LockAction.RENEW, null, "junit", name, "owner", "instance", 60L, now + 120);
+        Lock renewLock = new Lock(LockAction.RENEW, null, "junit", name, "owner", "instance", 60L, null);
         Lock renewed = lockService.renewLock(renewLock, now + 30);
-        assertTrue(renewed.getSuccess());
+        assertRenewLockSuccess(renewLock, renewed, now + 30, 60L, now + 60);
 
         // Release Lock
         Lock releaseLock = new Lock(LockAction.RELEASE, null, "junit", name, "owner", "instance", null, null);
         Lock released = lockService.releaseLock(releaseLock, now + 60);
-        assertTrue(released.getSuccess());
+        assertReleaseLockSuccess(releaseLock, released);
 
         // Verify Lock is Released
         Lock finalLock = lockService.getLock("junit", name);
-        assertNull(finalLock);
+        assertNull(finalLock, "Released lock should be deleted and return null");
     }
 
     @Test
@@ -149,12 +348,13 @@ public abstract class AbstractLockServiceTest {
         // Acquire Lock
         Lock acquireLock = new Lock(LockAction.ACQUIRE, null, "junit", name, "owner", "instance", 60L, now + 60);
         Lock acquired = lockService.acquireLock(acquireLock, now);
-        assertTrue(acquired.getSuccess());
+        assertAcquireLockSuccess(acquireLock, acquired, now);
 
         // Acquire Lock in the past
-        Lock acquireLockPast = new Lock(LockAction.ACQUIRE, null, "junit", name, "owner2", "instance2", 60L, now - 1);
-        Lock acquiredPast = lockService.acquireLock(acquireLockPast, now - 1);
-        assertFalse(acquiredPast.getSuccess());
+        long past = now - 1;
+        Lock acquireLockPast = new Lock(LockAction.ACQUIRE, null, "junit", name, "owner2", "instance2", 60L, past + 60);
+        Lock acquirePast = lockService.acquireLock(acquireLockPast, past);
+        assertAcquireLockFailed(acquireLockPast, acquirePast, past);
     }
 
     // Acquire a lock at the same time as an existing lock
@@ -166,13 +366,13 @@ public abstract class AbstractLockServiceTest {
         // Acquire Lock
         Lock acquireLock = new Lock(LockAction.ACQUIRE, null, "junit", name, "owner", "instance", 60L, now + 60);
         Lock acquired = lockService.acquireLock(acquireLock, now);
-        assertTrue(acquired.getSuccess());
+        assertAcquireLockSuccess(acquireLock, acquired, now);
 
         // Acquire Lock at the same time
         Lock acquireLockSameTime = new Lock(LockAction.ACQUIRE, null, "junit", name, "owner2", "instance2", 60L,
                 now + 60);
         Lock acquiredSameTime = lockService.acquireLock(acquireLockSameTime, now);
-        assertFalse(acquiredSameTime.getSuccess());
+        assertAcquireLockFailed(acquireLockSameTime, acquiredSameTime, now);
     }
 
     @Test
@@ -187,42 +387,25 @@ public abstract class AbstractLockServiceTest {
         Lock acquired1 = lockService.acquireLock(lock1, now);
         Lock acquired2 = lockService.acquireLock(lock2, now);
 
-        assertTrue(acquired1.getSuccess());
-        assertTrue(acquired2.getSuccess());
-
-        assertNotNull(lockService.getLock("junit", name1));
-        assertNotNull(lockService.getLock("junit", name2));
+        assertAcquireLockSuccess(lock1, acquired1, now);
+        assertAcquireLockSuccess(lock2, acquired2, now);
 
         // Now get both of these locks and assert they belong to the correct owner and
         // instance
         Lock found1 = lockService.getLock("junit", name1);
         Lock found2 = lockService.getLock("junit", name2);
 
-        assertEquals("owner1", found1.getOwner());
-        assertEquals("instance1", found1.getInstanceId());
-        assertEquals("owner2", found2.getOwner());
-        assertEquals("instance2", found2.getInstanceId());
-
+        assertGetLockMatches(found1, "junit", name1, "owner1", "instance1", 60L, now + 60);
+        assertGetLockMatches(found2, "junit", name2, "owner2", "instance2", 60L, now + 60);
     }
 
     @Test
     public void acquireLockNewTest() {
-        // If we try to acquire a lock that does not exist (by generating a random lock
-        // name), we should get back a new lock.
         String name = UUID.randomUUID().toString();
         long now = this.getNow();
         Lock lock = new Lock(LockAction.ACQUIRE, null, "junit", name, "owner", "instance", 10L, now + 10);
         Lock acquired = this.lockService.acquireLock(lock, now);
-        assertNotNull(acquired);
-
-        assertEquals(LockAction.SUCCESS, acquired.getAction());
-        assertTrue(acquired.getSuccess());
-        assertEquals("junit", acquired.getNamespace());
-        assertEquals(name, acquired.getLockName());
-        assertEquals("owner", acquired.getOwner());
-        assertEquals("instance", acquired.getInstanceId());
-        assertEquals(10L, acquired.getLeaseDuration());
-        assertEquals(now + 10, acquired.getExpiry());
+        assertAcquireLockSuccess(lock, acquired, now);
     }
 
     @Test
@@ -232,21 +415,12 @@ public abstract class AbstractLockServiceTest {
         long now = this.getNow();
         Lock lock = new Lock(LockAction.ACQUIRE, null, "junit", name, "owner", "instance", 60L, now + 60);
         Lock acquired = this.lockService.acquireLock(lock, now);
-        assertNotNull(acquired);
+        assertAcquireLockSuccess(lock, acquired, now);
 
         // Now we want to acquire the lock we made
         Lock lock2 = new Lock(LockAction.ACQUIRE, null, "junit", name, "owner2", "instance2", 60L, now + 60);
         Lock acquired2 = this.lockService.acquireLock(lock2, now);
-        assertNotNull(acquired2);
-
-        assertEquals(LockAction.FAILED, acquired2.getAction());
-        assertFalse(acquired2.getSuccess());
-        assertEquals("junit", acquired2.getNamespace());
-        assertEquals(name, acquired2.getLockName());
-        assertNull(acquired2.getOwner());
-        assertNull(acquired2.getInstanceId());
-        assertNull(acquired2.getLeaseDuration());
-        assertNull(acquired2.getExpiry());
+        assertAcquireLockFailed(lock2, acquired2, now);
     }
 
     @Test
@@ -256,22 +430,13 @@ public abstract class AbstractLockServiceTest {
         long now = this.getNow() - 100;
         Lock lock = new Lock(LockAction.ACQUIRE, null, "junit", name, "owner", "other", 60L, now + 60);
         Lock acquired = this.lockService.acquireLock(lock, now);
-        assertNotNull(acquired);
+        assertAcquireLockSuccess(lock, acquired, now);
 
         // Now we want to acquire the lock we made
         now = this.getNow();
         Lock lock2 = new Lock(LockAction.ACQUIRE, null, "junit", name, "owner", "instance", 60L, now + 60);
         Lock acquired2 = this.lockService.acquireLock(lock2, now);
-        assertNotNull(acquired2);
-
-        assertEquals(LockAction.SUCCESS, acquired2.getAction());
-        assertTrue(acquired2.getSuccess());
-        assertEquals("junit", acquired2.getNamespace());
-        assertEquals(name, acquired2.getLockName());
-        assertEquals("owner", acquired2.getOwner());
-        assertEquals("instance", acquired2.getInstanceId());
-        assertEquals(60L, acquired2.getLeaseDuration());
-        assertEquals(now + 60, acquired2.getExpiry());
+        assertAcquireLockSuccess(lock2, acquired2, now);
     }
 
     @Test
@@ -281,22 +446,13 @@ public abstract class AbstractLockServiceTest {
         long now = this.getNow();
         Lock lock = new Lock(LockAction.ACQUIRE, null, "junit", name, "owner", "instance", 60L, now + 60);
         Lock acquired = this.lockService.acquireLock(lock, now);
-        assertNotNull(acquired);
+        assertAcquireLockSuccess(lock, acquired, now);
 
         // Now we want to acquire the lock we made
         now += 10;
         Lock lock2 = new Lock(LockAction.ACQUIRE, null, "junit", name, "owner", "instance", 60L, now + 60);
         Lock acquired2 = this.lockService.acquireLock(lock2, now);
-        assertNotNull(acquired2);
-
-        assertEquals(LockAction.SUCCESS, acquired2.getAction());
-        assertTrue(acquired2.getSuccess());
-        assertEquals("junit", acquired2.getNamespace());
-        assertEquals(name, acquired2.getLockName());
-        assertEquals("owner", acquired2.getOwner());
-        assertEquals("instance", acquired2.getInstanceId());
-        assertEquals(60L, acquired2.getLeaseDuration());
-        assertEquals(now + 60, acquired2.getExpiry());
+        assertAcquireLockSuccess(lock2, acquired2, now);
     }
 
     @Test
@@ -305,18 +461,9 @@ public abstract class AbstractLockServiceTest {
         // name), we should get back null.
         String name = UUID.randomUUID().toString();
         long now = this.getNow();
-        Lock lock = new Lock(LockAction.RENEW, null, "junit", name, "owner", "instance", 10L, this.getNow() + 10);
+        Lock lock = new Lock(LockAction.RENEW, null, "junit", name, "owner", "instance", 10L, null);
         Lock renewed = this.lockService.renewLock(lock, now);
-        assertNotNull(renewed);
-
-        assertEquals(LockAction.FAILED, renewed.getAction());
-        assertFalse(renewed.getSuccess());
-        assertEquals("junit", renewed.getNamespace());
-        assertEquals(name, renewed.getLockName());
-        assertNull(renewed.getOwner());
-        assertNull(renewed.getInstanceId());
-        assertNull(renewed.getLeaseDuration());
-        assertNull(renewed.getExpiry());
+        assertRenewLockFailed(lock, renewed, now);
     }
 
     @Test
@@ -326,22 +473,13 @@ public abstract class AbstractLockServiceTest {
         long now = this.getNow();
         Lock lock = new Lock(LockAction.ACQUIRE, null, "junit", name, "owner", "instance", 60L, now + 60);
         Lock acquired = this.lockService.acquireLock(lock, now);
-        assertNotNull(acquired);
+        assertAcquireLockSuccess(lock, acquired, now);
 
         // Now we want to renew the lock we made
         now += 1;
-        Lock lock2 = new Lock(LockAction.RENEW, null, "junit", name, "owner2", "instance", 60L, now + 60);
+        Lock lock2 = new Lock(LockAction.RENEW, null, "junit", name, "owner2", "instance", 60L, null);
         Lock renewed = this.lockService.renewLock(lock2, now);
-        assertNotNull(renewed);
-
-        assertEquals(LockAction.FAILED, renewed.getAction());
-        assertFalse(renewed.getSuccess());
-        assertEquals("junit", renewed.getNamespace());
-        assertEquals(name, renewed.getLockName());
-        assertNull(renewed.getOwner());
-        assertNull(renewed.getInstanceId());
-        assertNull(renewed.getLeaseDuration());
-        assertNull(renewed.getExpiry());
+        assertRenewLockFailed(lock2, renewed, now);
     }
 
     @Test
@@ -351,22 +489,13 @@ public abstract class AbstractLockServiceTest {
         long now = this.getNow();
         Lock lock = new Lock(LockAction.ACQUIRE, null, "junit", name, "owner", "instance", 60L, now + 60);
         Lock acquired = this.lockService.acquireLock(lock, now);
-        assertNotNull(acquired);
+        assertAcquireLockSuccess(lock, acquired, now);
 
         // Now we want to renew the lock we made
         now += 10;
-        Lock lock2 = new Lock(LockAction.RENEW, null, "junit", name, "owner", "instance", 60L, now + 60);
+        Lock lock2 = new Lock(LockAction.RENEW, null, "junit", name, "owner", "instance", 60L, null);
         Lock renewed = this.lockService.renewLock(lock2, now);
-        assertNotNull(renewed);
-
-        assertEquals(LockAction.SUCCESS, renewed.getAction());
-        assertTrue(renewed.getSuccess());
-        assertEquals("junit", renewed.getNamespace());
-        assertEquals(name, renewed.getLockName());
-        assertEquals("owner", renewed.getOwner());
-        assertEquals("instance", renewed.getInstanceId());
-        assertEquals(120L, renewed.getLeaseDuration());
-        assertEquals(now - 10 + 60 + 60, renewed.getExpiry());
+        assertRenewLockSuccess(lock2, renewed, now, 60L, now - 10 + 60);
     }
 
     @Test
@@ -376,22 +505,13 @@ public abstract class AbstractLockServiceTest {
         long now = this.getNow() - 100;
         Lock lock = new Lock(LockAction.ACQUIRE, null, "junit", name, "owner", "instance", 60L, now + 60);
         Lock acquired = this.lockService.acquireLock(lock, now);
-        assertNotNull(acquired);
+        assertAcquireLockSuccess(lock, acquired, now);
 
         // Now we want to renew the lock we made
         now = this.getNow();
-        Lock lock2 = new Lock(LockAction.RENEW, null, "junit", name, "owner", "instance", 60L, now + 60);
+        Lock lock2 = new Lock(LockAction.RENEW, null, "junit", name, "owner", "instance", 60L, null);
         Lock renewed = this.lockService.renewLock(lock2, now);
-        assertNotNull(renewed);
-
-        assertEquals(LockAction.FAILED, renewed.getAction());
-        assertFalse(renewed.getSuccess());
-        assertEquals("junit", renewed.getNamespace());
-        assertEquals(name, renewed.getLockName());
-        assertNull(renewed.getOwner());
-        assertNull(renewed.getInstanceId());
-        assertNull(renewed.getLeaseDuration());
-        assertNull(renewed.getExpiry());
+        assertRenewLockFailed(lock2, renewed, now);
     }
 
     @Test
@@ -402,16 +522,7 @@ public abstract class AbstractLockServiceTest {
         long now = this.getNow();
         Lock lock = new Lock(LockAction.RELEASE, null, "junit", name, "owner", "instance", null, null);
         Lock released = this.lockService.releaseLock(lock, now);
-        assertNotNull(released);
-
-        assertEquals(LockAction.SUCCESS, released.getAction());
-        assertTrue(released.getSuccess());
-        assertEquals("junit", released.getNamespace());
-        assertEquals(name, released.getLockName());
-        assertNull(released.getOwner());
-        assertNull(released.getInstanceId());
-        assertNull(released.getLeaseDuration());
-        assertNull(released.getExpiry());
+        assertReleaseLockSuccess(lock, released);
     }
 
     @Test
@@ -421,22 +532,13 @@ public abstract class AbstractLockServiceTest {
         long now = this.getNow();
         Lock lock = new Lock(LockAction.ACQUIRE, null, "junit", name, "owner", "instance", 60L, now + 60);
         Lock acquired = this.lockService.acquireLock(lock, now);
-        assertNotNull(acquired);
+        assertAcquireLockSuccess(lock, acquired, now);
 
         // Now we want to release the lock we made
         now += 1;
         Lock lock2 = new Lock(LockAction.RELEASE, null, "junit", name, "owner2", "instance", null, null);
         Lock released = this.lockService.releaseLock(lock2, now);
-        assertNotNull(released);
-
-        assertEquals(LockAction.FAILED, released.getAction());
-        assertFalse(released.getSuccess());
-        assertEquals("junit", released.getNamespace());
-        assertEquals(name, released.getLockName());
-        assertNull(released.getOwner());
-        assertNull(released.getInstanceId());
-        assertNull(released.getLeaseDuration());
-        assertNull(released.getExpiry());
+        assertReleaseLockFailed(lock2, released);
     }
 
     @Test
@@ -446,22 +548,13 @@ public abstract class AbstractLockServiceTest {
         long now = this.getNow();
         Lock lock = new Lock(LockAction.ACQUIRE, null, "junit", name, "owner", "other", 60L, now + 60);
         Lock acquired = this.lockService.acquireLock(lock, now);
-        assertNotNull(acquired);
+        assertAcquireLockSuccess(lock, acquired, now);
 
         // Now we want to release the lock we made
         now += 100;
         Lock lock2 = new Lock(LockAction.RELEASE, null, "junit", name, "owner", "instance", null, null);
         Lock released = this.lockService.releaseLock(lock2, now);
-        assertNotNull(released);
-
-        assertEquals(LockAction.SUCCESS, released.getAction());
-        assertTrue(released.getSuccess());
-        assertEquals("junit", released.getNamespace());
-        assertEquals(name, released.getLockName());
-        assertNull(released.getOwner());
-        assertNull(released.getInstanceId());
-        assertNull(released.getLeaseDuration());
-        assertNull(released.getExpiry());
+        assertReleaseLockSuccess(lock2, released);
     }
 
     @Test
@@ -472,16 +565,16 @@ public abstract class AbstractLockServiceTest {
         // Acquire Lock
         Lock acquireLock = new Lock(LockAction.ACQUIRE, null, "junit", name, "owner", "instance", 60L, now + 60);
         Lock acquired = lockService.acquireLock(acquireLock, now);
-        assertTrue(acquired.getSuccess());
+        assertAcquireLockSuccess(acquireLock, acquired, now);
 
         // Release Lock
         Lock releaseLock = new Lock(LockAction.RELEASE, null, "junit", name, "owner", "instance", null, null);
         Lock released = lockService.releaseLock(releaseLock, now + 30);
-        assertTrue(released.getSuccess());
+        assertReleaseLockSuccess(releaseLock, released);
 
         // Attempt to Release Again
         Lock releaseAgain = lockService.releaseLock(releaseLock, now + 40);
-        assertTrue(releaseAgain.getSuccess());
+        assertReleaseLockSuccess(releaseLock, releaseAgain);
     }
 
     @Test
@@ -491,21 +584,12 @@ public abstract class AbstractLockServiceTest {
         long now = this.getNow();
         Lock lock = new Lock(LockAction.ACQUIRE, null, "junit", name, "owner", "instance", 60L, now + 60);
         Lock acquired = this.lockService.acquireLock(lock, now);
-        assertNotNull(acquired);
+        assertAcquireLockSuccess(lock, acquired, now);
 
         // Now we want to release the lock we made
         now += 1;
         Lock lock2 = new Lock(LockAction.RELEASE, null, "junit", name, "owner", "instance", null, null);
         Lock released = this.lockService.releaseLock(lock2, now);
-        assertNotNull(released);
-
-        assertEquals(LockAction.SUCCESS, released.getAction());
-        assertTrue(released.getSuccess());
-        assertEquals("junit", released.getNamespace());
-        assertEquals(name, released.getLockName());
-        assertNull(released.getOwner());
-        assertNull(released.getInstanceId());
-        assertNull(released.getLeaseDuration());
-        assertNull(released.getExpiry());
+        assertReleaseLockSuccess(lock2, released);
     }
 }
