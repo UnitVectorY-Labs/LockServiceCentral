@@ -11,20 +11,29 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.unitvectory.lockservicecentral.locker.memory;
+package com.unitvectory.lockservicecentral.locker.firestore;
 
+import org.junit.jupiter.api.Disabled;
+
+import com.google.cloud.firestore.FirestoreOptions;
 import com.unitvectory.lockservicecentral.locker.LockService;
 import com.unitvectory.lockservicecentral.locker.tests.AbstractLockServiceTest;
 
 /**
- * The MemoryLockService test.
+ * The FirestoreLockService test.
  * 
  * @author Jared Hatfield (UnitVectorY Labs)
  */
-public class MemoryLockServiceTest extends AbstractLockServiceTest {
+@Disabled
+public class FirestoreLockServiceActualTest extends AbstractLockServiceTest {
 
     @Override
     protected LockService createLockService() {
-        return new MemoryLockService();
+        // These tests are disabled because they require interaction with an actual
+        // Firestore database to run. These are only intended to be used for manual
+        // local testing.
+        return new FirestoreLockService(FirestoreOptions.getDefaultInstance().toBuilder()
+                .build().getService(), "locks");
     }
+
 }

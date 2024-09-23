@@ -31,6 +31,13 @@ public class MemoryLockService implements LockService {
 
     private final ConcurrentHashMap<String, Lock> locks = new ConcurrentHashMap<>();
 
+    private void save(Lock lock) {
+        String key = generateKey(lock.getNamespace(), lock.getLockName());
+        Lock copy = lock.copy();
+        copy.setAction(null);
+        copy.setSuccess(null);
+        locks.put(key, copy);
+    }
     /**
      * Get a lock by namespace and lock name.
      * 
@@ -65,7 +72,7 @@ public class MemoryLockService implements LockService {
         if (existingLock != null) {
             // If the lock is active and belongs to the same instance, replace it
             if (existingLock.isMatch(lock) || existingLock.isExpired(now)) {
-                locks.put(key, lock.copy());
+                this.save(lock);
                 lock.setSuccess();
                 log.info("Lock replaced: {}", lock);
             } else {
@@ -75,7 +82,7 @@ public class MemoryLockService implements LockService {
             }
         } else {
             // If no lock exists, acquire it
-            locks.put(key, lock.copy());
+            this.save(lock);
             lock.setSuccess();
             log.info("Lock acquired: {}", lock);
         }
@@ -111,6 +118,8 @@ public class MemoryLockService implements LockService {
 
         lock = existingLock.copy();
         lock.setSuccess();
+
+        this.save(lock);
 
         log.info("Lock renewed: {}", lock);
         return lock;

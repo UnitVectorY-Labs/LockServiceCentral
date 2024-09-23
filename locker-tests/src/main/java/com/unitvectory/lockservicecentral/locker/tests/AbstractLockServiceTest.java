@@ -29,11 +29,11 @@ import com.unitvectory.lockservicecentral.locker.LockAction;
 import com.unitvectory.lockservicecentral.locker.LockService;
 
 /**
- * The set of tests the verify the behavior of a LockerService.
+ * The set of tests the verify the behavior of a LockService.
  * 
  * @author Jared Hatfield (UnitVectorY Labs)
  */
-public abstract class AbstractLockerTest {
+public abstract class AbstractLockServiceTest {
 
     private LockService lockService;
 
@@ -70,7 +70,7 @@ public abstract class AbstractLockerTest {
         Lock found = this.lockService.getLock("junit", name);
         assertNotNull(found);
 
-        assertEquals(LockAction.ACQUIRE, found.getAction());
+        assertNull(found.getAction());
         assertNull(found.getSuccess());
         assertEquals("junit", found.getNamespace());
         assertEquals(name, found.getLockName());
@@ -85,7 +85,8 @@ public abstract class AbstractLockerTest {
         // If we try to acquire a lock that does not exist (by generating a random lock
         // name), we should get back a new lock.
         String name = UUID.randomUUID().toString();
-        Lock lock = new Lock(LockAction.ACQUIRE, null, "junit", name, "owner", "instance", 10L, this.getNow() + 10);
+        long now = this.getNow();
+        Lock lock = new Lock(LockAction.ACQUIRE, null, "junit", name, "owner", "instance", 10L, now + 10);
         Lock acquired = this.lockService.acquireLock(lock, 0);
         assertNotNull(acquired);
 
@@ -96,7 +97,7 @@ public abstract class AbstractLockerTest {
         assertEquals("owner", acquired.getOwner());
         assertEquals("instance", acquired.getInstanceId());
         assertEquals(10L, acquired.getLeaseDuration());
-        assertEquals(this.getNow() + 10, acquired.getExpiry());
+        assertEquals(now + 10, acquired.getExpiry());
     }
 
     @Test
