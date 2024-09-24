@@ -1,0 +1,11 @@
+[
+    {
+      "verb": "GET",
+      "path": "/v1/mynamespace/lock/mylock",
+      "status": 200,
+      "response": {
+        "namespace": "mynamespace",
+        "lockName": "mylock"
+      }
+    }
+  ]

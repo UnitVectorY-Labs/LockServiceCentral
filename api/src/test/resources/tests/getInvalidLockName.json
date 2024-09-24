@@ -1,0 +1,13 @@
+[
+    {
+      "verb": "GET",
+      "path": "/v1/mynamespace/lock/a",
+      "status": 400,
+      "response": {
+        "message": "Validation failed",
+        "details": [
+          "Parameter 'lockName' failed validation: Lock name must be between 3 and 64 characters long"
+        ]
+      }
+    }
+  ]

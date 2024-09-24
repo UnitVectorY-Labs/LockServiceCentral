@@ -50,6 +50,13 @@ public class MemoryLockService implements LockService {
     }
 
     /**
+     * Clear all locks.
+     */
+    public void clear() {
+        this.locks.clear();
+    }
+
+    /**
      * Get a lock by namespace and lock name.
      * 
      * @param namespace The lock namespace

@@ -1,0 +1,13 @@
+[
+    {
+      "verb": "GET",
+      "path": "/v1/a/lock/mylock",
+      "status": 400,
+      "response": {
+        "message": "Validation failed",
+        "details": [
+          "Parameter 'namespace' failed validation: Namespace must be between 3 and 64 characters long"
+        ]
+      }
+    }
+  ]
