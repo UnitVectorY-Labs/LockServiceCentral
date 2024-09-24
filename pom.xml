@@ -20,22 +20,20 @@
         <module>api</module>
         <module>locker</module>
         <module>locker-tests</module>
+        <!-- The memory module is used for testing -->
+        <module>locker-memory</module>
     </modules>
     <profiles>
         <!-- The 'everything' profile builds all of the lockers for testing -->
         <profile>
             <id>everything</id>
             <modules>
-                <module>locker-memory</module>
                 <module>locker-firestore</module>
             </modules>
         </profile>
         <!-- Each locker specific profile will build the API with that implementation embedded-->
         <profile>
             <id>memory</id>
-            <modules>
-                <module>locker-memory</module>
-            </modules>
         </profile>
         <profile>
             <id>firestore</id>
