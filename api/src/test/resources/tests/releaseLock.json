@@ -1,0 +1,16 @@
+[
+    {
+      "now": 1727000000,
+      "verb": "POST",
+      "path": "/v1/mynamespace/lock/mylock/release",
+      "request": {
+        "instanceId": "myinstanceid"
+      },
+      "status": 200,
+      "response": {
+        "success": true,
+        "namespace": "mynamespace",
+        "lockName": "mylock"
+      }
+    }
+  ]

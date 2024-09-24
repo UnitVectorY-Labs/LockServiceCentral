@@ -13,8 +13,6 @@
  */
 package com.unitvectory.lockservicecentral.api.service;
 
-import java.time.Instant;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -35,14 +33,8 @@ public class LockManagerService {
     @Autowired
     private LockService lockService;
 
-    /**
-     * Get the current time.
-     * 
-     * @return the current time
-     */
-    private long getNow() {
-        return Instant.now().getEpochSecond();
-    }
+    @Autowired
+    private TimeService timeService;
 
     /**
      * Get a lock.
@@ -63,7 +55,7 @@ public class LockManagerService {
             lock = activeLock;
         }
 
-        long now = getNow();
+        long now = this.timeService.now();
 
         // Clear out the owner and instance ID
         lock.setGet(now);
@@ -81,7 +73,7 @@ public class LockManagerService {
         lock.setAction(LockAction.ACQUIRE);
 
         // Calculate the expiry based on the current time and lease duration
-        long now = getNow();
+        long now = this.timeService.now();
         long expiry = now + lock.getLeaseDuration();
         lock.setExpiry(expiry);
 
@@ -98,7 +90,7 @@ public class LockManagerService {
         lock.setAction(LockAction.RENEW);
 
         // The current time is used to renew the lock
-        long now = getNow();
+        long now = this.timeService.now();
 
         return lockService.renewLock(lock, now);
     }
@@ -113,7 +105,7 @@ public class LockManagerService {
         lock.setAction(LockAction.RELEASE);
 
         // The current time is used to release the lock
-        long now = getNow();
+        long now = this.timeService.now();
 
         return lockService.releaseLock(lock, now);
     }

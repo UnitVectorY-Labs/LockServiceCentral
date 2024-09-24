@@ -1,0 +1,17 @@
+[
+    {
+      "now": 1727000000,
+      "verb": "POST",
+      "path": "/v1/mynamespace/lock/mylock/renew",
+      "request": {
+        "instanceId": "myinstanceid",
+        "leaseDuration": 60
+      },
+      "status": 423,
+      "response": {
+        "success": false,
+        "namespace": "mynamespace",
+        "lockName": "mylock"
+      }
+    }
+  ]

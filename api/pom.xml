@@ -73,7 +73,7 @@
             <groupId>com.unitvectory.lockservicecentral</groupId>
             <artifactId>locker-memory</artifactId>
             <version>${project.version}</version>
-            <scope>runtime</scope>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
