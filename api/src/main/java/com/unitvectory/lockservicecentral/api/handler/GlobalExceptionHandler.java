@@ -13,6 +13,7 @@
  */
 package com.unitvectory.lockservicecentral.api.handler;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
@@ -25,6 +26,7 @@ import com.unitvectory.jsonschema4springboot.ValidateJsonSchemaException;
 import com.unitvectory.jsonschema4springboot.ValidateJsonSchemaFailedResponse;
 import com.unitvectory.lockservicecentral.api.dto.InternalErrorResponse;
 import com.unitvectory.lockservicecentral.api.dto.ValidationErrorResponse;
+import com.unitvectory.lockservicecentral.api.service.EntropyService;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -36,6 +38,9 @@ import lombok.extern.slf4j.Slf4j;
 @ControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
+
+    @Autowired
+    private EntropyService entropyService;
 
     @ExceptionHandler(ValidateJsonSchemaException.class)
     public ResponseEntity<ValidateJsonSchemaFailedResponse> onValidateJsonSchemaException(
@@ -53,19 +58,19 @@ public class GlobalExceptionHandler {
     public ResponseEntity<InternalErrorResponse> onHttpRequestMethodNotSupportedException(
             HttpRequestMethodNotSupportedException ex) {
         return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)
-                .body(new InternalErrorResponse("Method not allowed"));
+                .body(new InternalErrorResponse( this.entropyService.uuid(), "Method not allowed"));
     }
 
     @ExceptionHandler(NoResourceFoundException.class)
     public ResponseEntity<InternalErrorResponse> onNoResourceFoundException(NoResourceFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(new InternalErrorResponse("Resource not found"));
+                .body(new InternalErrorResponse( this.entropyService.uuid(), "Resource not found"));
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<InternalErrorResponse> onException(Exception ex) {
         // This will generate a unique error ID for each error
-        InternalErrorResponse response = new InternalErrorResponse();
+        InternalErrorResponse response = new InternalErrorResponse(this.entropyService.uuid());
 
         // Logging the error ID and the exception so they can be correlated
         log.error(response.getErrorId(), ex);

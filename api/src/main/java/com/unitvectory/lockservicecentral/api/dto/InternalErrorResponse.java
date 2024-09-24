@@ -13,8 +13,6 @@
  */
 package com.unitvectory.lockservicecentral.api.dto;
 
-import java.util.UUID;
-
 import lombok.Getter;
 
 /**
@@ -37,19 +35,22 @@ public class InternalErrorResponse {
 
     /**
      * Create a new internal error response
+     * 
+     * @param errorId the error ID
      */
-    public InternalErrorResponse() {
+    public InternalErrorResponse(String errorId) {
         this.message = "Internal server error";
-        this.errorId = UUID.randomUUID().toString();
+        this.errorId = errorId;
     }
 
     /**
      * Create a new internal error response
      * 
+     * @param errorId the error ID
      * @param message the message
      */
-    public InternalErrorResponse(String message) {
+    public InternalErrorResponse(String errorId, String message) {
         this.message = message;
-        this.errorId = UUID.randomUUID().toString();
+        this.errorId = errorId;
     }
 }

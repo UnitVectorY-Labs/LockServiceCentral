@@ -1,0 +1,11 @@
+[
+    {
+      "verb": "GET",
+      "path": "/v1/mynamespace/lock/mylock/acquire",
+      "status": 405,
+      "response": {
+        "message":"Method not allowed",
+        "errorId": "00000000-0000-0000-0000-000000000000"
+      }
+    }
+  ]

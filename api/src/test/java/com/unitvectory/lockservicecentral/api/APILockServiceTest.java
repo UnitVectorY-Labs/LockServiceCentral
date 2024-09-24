@@ -43,7 +43,7 @@ import java.io.File;
  * @author Jared Hatfield (UnitVectorY Labs)
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@ActiveProfiles("time-disabled")
+@ActiveProfiles(profiles = { "time-disabled", "entropy-disabled" })
 @WebMvcTest(value = LockController.class, properties = { "authentication.disabled=true" })
 public class APILockServiceTest {
 

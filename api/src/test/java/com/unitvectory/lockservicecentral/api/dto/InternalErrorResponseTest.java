@@ -14,7 +14,6 @@
 package com.unitvectory.lockservicecentral.api.dto;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import org.junit.jupiter.api.Test;
 
@@ -27,16 +26,15 @@ public class InternalErrorResponseTest {
 
     @Test
     public void testDefaultConstructor() {
-        InternalErrorResponse response = new InternalErrorResponse();
+        InternalErrorResponse response = new InternalErrorResponse("00000000-0000-0000-0000-000000000000");
         assertEquals("Internal server error", response.getMessage());
-        assertNotNull(response.getErrorId());
+        assertEquals("00000000-0000-0000-0000-000000000000" , response.getErrorId());
     }
 
     @Test
     public void testParameterizedConstructor() {
         String customMessage = "Custom error message";
-        InternalErrorResponse response = new InternalErrorResponse(customMessage);
-        assertEquals(customMessage, response.getMessage());
-        assertNotNull(response.getErrorId());
+        InternalErrorResponse response = new InternalErrorResponse("00000000-0000-0000-0000-000000000001", customMessage);
+        assertEquals("00000000-0000-0000-0000-000000000001" , response.getErrorId());
     }
 }

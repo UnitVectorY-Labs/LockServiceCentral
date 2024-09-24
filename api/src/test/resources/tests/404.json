@@ -1,0 +1,11 @@
+[
+    {
+      "verb": "GET",
+      "path": "/v1/mynamespace/lock",
+      "status": 404,
+      "response": {
+        "message":"Resource not found",
+        "errorId": "00000000-0000-0000-0000-000000000000"
+      }
+    }
+  ]
