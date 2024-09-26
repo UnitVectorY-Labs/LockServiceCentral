@@ -11,19 +11,26 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.unitvectory.lockservicecentral.api.service;
+package com.unitvectory.lockservicecentral.api.config;
 
-import java.util.UUID;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
+
+import com.unitvectory.consistgen.uuid.RandomUuidGenerator;
+import com.unitvectory.consistgen.uuid.UuidGenerator;
 
 /**
- * The Random Entropy Service
+ * The UUID Generator Configuration
  * 
  * @author Jared Hatfield (UnitVectorY Labs)
  */
-public class RandomEntropyService implements EntropyService {
+@Configuration
+@Profile("!uuid-disabled")
+public class UuidGeneratorConfiguration {
 
-    @Override
-    public String uuid() {
-        return UUID.randomUUID().toString();
+    @Bean
+    public UuidGenerator uuidGenerator() {
+        return RandomUuidGenerator.getInstance();
     }
 }

@@ -16,6 +16,7 @@ package com.unitvectory.lockservicecentral.api.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.unitvectory.consistgen.epoch.EpochTimeProvider;
 import com.unitvectory.lockservicecentral.locker.Lock;
 import com.unitvectory.lockservicecentral.locker.LockAction;
 import com.unitvectory.lockservicecentral.locker.LockService;
@@ -34,7 +35,7 @@ public class LockManagerService {
     private LockService lockService;
 
     @Autowired
-    private TimeService timeService;
+    private EpochTimeProvider epochTimeProvider;
 
     /**
      * Get a lock.
@@ -55,7 +56,7 @@ public class LockManagerService {
             lock = activeLock;
         }
 
-        long now = this.timeService.now();
+        long now = this.epochTimeProvider.epochTimeSeconds();
 
         // Clear out the owner and instance ID
         lock.setGet(now);
@@ -73,7 +74,7 @@ public class LockManagerService {
         lock.setAction(LockAction.ACQUIRE);
 
         // Calculate the expiry based on the current time and lease duration
-        long now = this.timeService.now();
+        long now = this.epochTimeProvider.epochTimeSeconds();
         long expiry = now + lock.getLeaseDuration();
         lock.setExpiry(expiry);
 
@@ -90,7 +91,7 @@ public class LockManagerService {
         lock.setAction(LockAction.RENEW);
 
         // The current time is used to renew the lock
-        long now = this.timeService.now();
+        long now = this.epochTimeProvider.epochTimeSeconds();
 
         return lockService.renewLock(lock, now);
     }
@@ -105,7 +106,7 @@ public class LockManagerService {
         lock.setAction(LockAction.RELEASE);
 
         // The current time is used to release the lock
-        long now = this.timeService.now();
+        long now = this.epochTimeProvider.epochTimeSeconds();
 
         return lockService.releaseLock(lock, now);
     }

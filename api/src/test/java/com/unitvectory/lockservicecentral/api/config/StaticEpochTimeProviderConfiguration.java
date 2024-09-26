@@ -17,8 +17,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
-import com.unitvectory.lockservicecentral.api.service.StaticTimeService;
-import com.unitvectory.lockservicecentral.api.service.TimeService;
+import com.unitvectory.consistgen.epoch.EpochTimeProvider;
+import com.unitvectory.consistgen.epoch.SettableEpochTimeProvider;
 
 /**
  * The Static Time Configuration
@@ -27,10 +27,15 @@ import com.unitvectory.lockservicecentral.api.service.TimeService;
  */
 @Configuration
 @Profile("time-disabled")
-public class StaticTimeConfiguration {
+public class StaticEpochTimeProviderConfiguration {
 
     @Bean
-    public TimeService timeService() {
-        return new StaticTimeService();
+    public SettableEpochTimeProvider settableEpochTimeProvider() {
+        return new SettableEpochTimeProvider();
+    }
+
+    @Bean
+    public EpochTimeProvider epochTimeProvider(SettableEpochTimeProvider settableEpochTimeProvider) {
+        return settableEpochTimeProvider;
     }
 }

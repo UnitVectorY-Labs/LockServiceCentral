@@ -25,10 +25,9 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.unitvectory.consistgen.epoch.SettableEpochTimeProvider;
 import com.unitvectory.fileparamunit.ListFileSource;
 import com.unitvectory.lockservicecentral.api.controller.LockController;
-import com.unitvectory.lockservicecentral.api.service.StaticTimeService;
-import com.unitvectory.lockservicecentral.api.service.TimeService;
 import com.unitvectory.lockservicecentral.locker.LockService;
 import com.unitvectory.lockservicecentral.locker.memory.MemoryLockService;
 
@@ -43,17 +42,17 @@ import java.io.File;
  * @author Jared Hatfield (UnitVectorY Labs)
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@ActiveProfiles(profiles = { "time-disabled", "entropy-disabled" })
+@ActiveProfiles(profiles = { "time-disabled", "uuid-disabled" })
 @WebMvcTest(value = LockController.class, properties = { "authentication.disabled=true" })
 public class APILockServiceTest {
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     @Autowired
-    private LockService lockService;
+    private SettableEpochTimeProvider settableEpochTimeProvider;
 
     @Autowired
-    private TimeService timeService;
+    private LockService lockService;
 
     @Autowired
     private MockMvc mockMvc;
@@ -95,9 +94,7 @@ public class APILockServiceTest {
                 long now = node.get("now").asLong();
 
                 // Set now for the static time service used for testing
-                if (timeService instanceof StaticTimeService) {
-                    ((StaticTimeService) timeService).setNow(now);
-                }
+                settableEpochTimeProvider.setEpohTimeSeconds(now);
 
                 // Run the POST request
                 mockMvc.perform(MockMvcRequestBuilders.post(path)

@@ -22,11 +22,11 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
+import com.unitvectory.consistgen.uuid.UuidGenerator;
 import com.unitvectory.jsonschema4springboot.ValidateJsonSchemaException;
 import com.unitvectory.jsonschema4springboot.ValidateJsonSchemaFailedResponse;
 import com.unitvectory.lockservicecentral.api.dto.InternalErrorResponse;
 import com.unitvectory.lockservicecentral.api.dto.ValidationErrorResponse;
-import com.unitvectory.lockservicecentral.api.service.EntropyService;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -40,7 +40,7 @@ import lombok.extern.slf4j.Slf4j;
 public class GlobalExceptionHandler {
 
     @Autowired
-    private EntropyService entropyService;
+    private UuidGenerator uuidGenerator;
 
     @ExceptionHandler(ValidateJsonSchemaException.class)
     public ResponseEntity<ValidateJsonSchemaFailedResponse> onValidateJsonSchemaException(
@@ -58,19 +58,19 @@ public class GlobalExceptionHandler {
     public ResponseEntity<InternalErrorResponse> onHttpRequestMethodNotSupportedException(
             HttpRequestMethodNotSupportedException ex) {
         return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)
-                .body(new InternalErrorResponse( this.entropyService.uuid(), "Method not allowed"));
+                .body(new InternalErrorResponse(this.uuidGenerator.generateUuid(), "Method not allowed"));
     }
 
     @ExceptionHandler(NoResourceFoundException.class)
     public ResponseEntity<InternalErrorResponse> onNoResourceFoundException(NoResourceFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(new InternalErrorResponse( this.entropyService.uuid(), "Resource not found"));
+                .body(new InternalErrorResponse(this.uuidGenerator.generateUuid(), "Resource not found"));
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<InternalErrorResponse> onException(Exception ex) {
         // This will generate a unique error ID for each error
-        InternalErrorResponse response = new InternalErrorResponse(this.entropyService.uuid());
+        InternalErrorResponse response = new InternalErrorResponse(this.uuidGenerator.generateUuid());
 
         // Logging the error ID and the exception so they can be correlated
         log.error(response.getErrorId(), ex);

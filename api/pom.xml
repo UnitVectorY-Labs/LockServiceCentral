@@ -52,6 +52,10 @@
         </dependency>
         <dependency>
             <groupId>com.unitvectory</groupId>
+            <artifactId>consistgen</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.unitvectory</groupId>
             <artifactId>jsonschema4springboot</artifactId>
         </dependency>
         <dependency>

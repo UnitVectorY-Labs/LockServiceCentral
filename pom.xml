@@ -50,6 +50,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <jsonschema4springboot.version>0.0.3</jsonschema4springboot.version>
         <spring-cloud-gcp-dependencies.version>5.6.1</spring-cloud-gcp-dependencies.version>
+        <consistgen.version>0.0.3</consistgen.version>
         <fileparamunit.version>0.0.4</fileparamunit.version>
     </properties>
 
@@ -66,6 +67,11 @@
                 <groupId>com.unitvectory</groupId>
                 <artifactId>jsonschema4springboot</artifactId>
                 <version>${jsonschema4springboot.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.unitvectory</groupId>
+                <artifactId>consistgen</artifactId>
+                <version>${consistgen.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.unitvectory</groupId>

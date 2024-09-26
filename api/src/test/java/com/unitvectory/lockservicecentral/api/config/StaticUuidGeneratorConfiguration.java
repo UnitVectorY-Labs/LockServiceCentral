@@ -17,20 +17,20 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
-import com.unitvectory.lockservicecentral.api.service.EntropyService;
-import com.unitvectory.lockservicecentral.api.service.RandomEntropyService;
+import com.unitvectory.consistgen.uuid.StaticUuidGenerator;
+import com.unitvectory.consistgen.uuid.UuidGenerator;
 
 /**
- * The Entropy Configuration
+ * The Static UUUID Generator Configuration
  * 
  * @author Jared Hatfield (UnitVectorY Labs)
  */
 @Configuration
-@Profile("!entropy-disabled")
-public class EntropyConfiguration {
+@Profile("uuid-disabled")
+public class StaticUuidGeneratorConfiguration {
 
     @Bean
-    public EntropyService entropyService() {
-        return new RandomEntropyService();
+    public UuidGenerator uuidGenerator() {
+        return StaticUuidGenerator.builder().build();
     }
 }

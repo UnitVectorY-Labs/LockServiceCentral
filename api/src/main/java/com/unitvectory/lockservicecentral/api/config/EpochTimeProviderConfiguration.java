@@ -11,19 +11,26 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.unitvectory.lockservicecentral.api.service;
+package com.unitvectory.lockservicecentral.api.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
+
+import com.unitvectory.consistgen.epoch.EpochTimeProvider;
+import com.unitvectory.consistgen.epoch.SystemEpochTimeProvider;
 
 /**
- * The Entropy Service
+ * The Time Configuration
  * 
  * @author Jared Hatfield (UnitVectorY Labs)
  */
-public interface EntropyService {
+@Configuration
+@Profile("!time-disabled")
+public class EpochTimeProviderConfiguration {
 
-    /**
-     * Get a UUID
-     * 
-     * @return the UUID
-     */
-    String uuid();
+    @Bean
+    public EpochTimeProvider epochTimeProvider() {
+        return SystemEpochTimeProvider.getInstance();
+    }
 }
