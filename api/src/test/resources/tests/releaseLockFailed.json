@@ -1,0 +1,35 @@
+[
+    {
+      "now": 1727000000,
+      "verb": "POST",
+      "path": "/v1/mynamespace/lock/mylock/acquire",
+      "request": {
+        "instanceId": "myinstanceid",
+        "leaseDuration": 60
+      },
+      "status": 200,
+      "response": {
+        "success": true,
+        "namespace": "mynamespace",
+        "lockName": "mylock",
+        "owner": "anonymous",
+        "instanceId": "myinstanceid",
+        "leaseDuration": 60,
+        "expiry": 1727000060
+      }
+    },
+    {
+        "now": 1727000010,
+        "verb": "POST",
+        "path": "/v1/mynamespace/lock/mylock/release",
+        "request": {
+          "instanceId": "other"
+        },
+        "status": 423,
+        "response": {
+          "success": false,
+          "namespace": "mynamespace",
+          "lockName": "mylock"
+        }
+      }
+  ]

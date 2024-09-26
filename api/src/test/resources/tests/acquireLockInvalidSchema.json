@@ -1,0 +1,19 @@
+[
+    {
+      "now": 1727000000,
+      "verb": "POST",
+      "path": "/v1/mynamespace/lock/mylock/acquire",
+      "request": {
+        "instanceId": "myinstanceid",
+        "leaseDuration": 60,
+        "foo": "bar"
+      },
+      "status": 400,
+      "response": {
+        "message": "JSON validation failed",
+        "details": [
+          "$: property 'foo' is not defined in the schema and the schema does not allow additional properties"
+        ]
+      }
+    }
+  ]
