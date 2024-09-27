@@ -94,7 +94,7 @@ public class APILockServiceTest {
                 long now = node.get("now").asLong();
 
                 // Set now for the static time service used for testing
-                settableEpochTimeProvider.setEpohTimeSeconds(now);
+                settableEpochTimeProvider.setEpochTimeSeconds(now);
 
                 // Run the POST request
                 mockMvc.perform(MockMvcRequestBuilders.post(path)
