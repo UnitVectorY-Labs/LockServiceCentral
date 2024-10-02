@@ -24,6 +24,17 @@
         <module>locker-memory</module>
     </modules>
     <profiles>
+        <profile>
+            <id>native</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.graalvm.buildtools</groupId>
+                        <artifactId>native-maven-plugin</artifactId>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
         <!-- The 'everything' profile builds all of the lockers for testing -->
         <profile>
             <id>everything</id>

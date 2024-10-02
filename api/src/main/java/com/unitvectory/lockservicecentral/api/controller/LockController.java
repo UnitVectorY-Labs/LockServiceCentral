@@ -14,6 +14,7 @@
 package com.unitvectory.lockservicecentral.api.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.ImportRuntimeHints;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -25,6 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.unitvectory.jsonschema4springboot.ValidateJsonSchema;
 import com.unitvectory.jsonschema4springboot.ValidateJsonSchemaVersion;
+import com.unitvectory.lockservicecentral.api.config.MyRuntimeHintsRegistrar;
 import com.unitvectory.lockservicecentral.api.service.LockManagerService;
 import com.unitvectory.lockservicecentral.locker.Lock;
 
@@ -38,6 +40,7 @@ import lombok.NonNull;
  * 
  * @author Jared Hatfield (UnitVectorY Labs)
  */
+@ImportRuntimeHints(MyRuntimeHintsRegistrar.class)
 @RestController
 public class LockController {
 
