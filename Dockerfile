@@ -1,8 +1,10 @@
 # Stage 1: Build the application
-FROM maven:3.9-amazoncorretto-17 AS build
+FROM ghcr.io/graalvm/graalvm-community:23 as build
+
+# Install Maven needed for building the application
+RUN microdnf install -y maven
 
 # Define argument for specifying the LOCKER
-# This is used as the maven profile to build the application
 ARG LOCKER=memory
 
 WORKDIR /app
@@ -10,16 +12,23 @@ WORKDIR /app
 # Copy your project files
 COPY . .
 
-# Build the application
-RUN mvn clean package -DskipTests -P${LOCKER} -ntp && \
-  rm -rf /app/api/target/*-javadoc.jar && \
-  mkdir -p /app/build && \
-  mv /app/api/target/*.jar /app/build/
+# Build the application using Maven and GraalVM
+RUN mvn clean package -P${LOCKER} -Pnative -DskipTests -Dmaven.javadoc.skip=true -ntp 
 
+# Stage 2: Create a lightweight runtime environment
+FROM ghcr.io/graalvm/graalvm-community:23
 
-# Stage 2: Run the application
-FROM amazoncorretto:17-alpine-jdk
+# Set the working directory
 WORKDIR /app
-COPY --from=build /app/build/*.jar app.jar
+
+# Copy only the final binary from the build stage
+COPY --from=build /app/api/target/api .
+
+# Ensure the binary has execute permissions
+RUN chmod +x /app/api
+
+# Expose the application port
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+
+# Run the application
+ENTRYPOINT ["/app/api"]]
