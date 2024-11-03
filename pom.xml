@@ -49,7 +49,7 @@
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <jsonschema4springboot.version>0.0.4</jsonschema4springboot.version>
-        <spring-cloud-gcp-dependencies.version>5.6.1</spring-cloud-gcp-dependencies.version>
+        <spring-cloud-gcp-dependencies.version>5.8.0</spring-cloud-gcp-dependencies.version>
         <consistgen.version>0.0.7</consistgen.version>
         <fileparamunit.version>0.0.5</fileparamunit.version>
     </properties>
