@@ -18,7 +18,7 @@ RUN mvn clean package -DskipTests -P${LOCKER} -ntp && \
 
 
 # Stage 2: Run the application
-FROM amazoncorretto:17-alpine-jdk
+FROM gcr.io/distroless/java17-debian12
 WORKDIR /app
 COPY --from=build /app/build/*.jar app.jar
 EXPOSE 8080
