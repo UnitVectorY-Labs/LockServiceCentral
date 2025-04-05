@@ -51,3 +51,17 @@ jobs:
         tags: ghcr.io/${{ env.REPO_LC }}-${{ matrix.tag }}:dev
         build-args: |
           LOCKER=${{ matrix.profile }}
+
+    - name: Set lowercase package name
+      run: |
+        PACKAGE_NAME=${GITHUB_REPOSITORY##*/}
+        echo "PACKAGE_NAME_LC=${PACKAGE_NAME,,}" >> $GITHUB_ENV
+
+    - name: Clean up untagged (dangling) docker images
+      uses: actions/delete-package-versions@v5
+      with:
+        owner: ${{ github.repository_owner }}
+        package-name: ${{ env.PACKAGE_NAME_LC }}-${{ matrix.tag }}
+        package-type: container
+        min-versions-to-keep: 1
+        delete-only-untagged-versions: 'true'
