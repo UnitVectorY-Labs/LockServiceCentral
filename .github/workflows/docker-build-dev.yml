@@ -48,7 +48,7 @@ jobs:
         context: .
         push: true
         platforms: linux/amd64,linux/arm64
-        tags: ghcr.io/${{ env.REPO_LC }}-${{ matrix.tag }}:dev
+        tags: ghcr.io/${{ env.REPO_LC }}-${{ matrix.tag }}-snapshot:dev
         build-args: |
           LOCKER=${{ matrix.profile }}
 
@@ -61,7 +61,7 @@ jobs:
       uses: actions/delete-package-versions@v5
       with:
         owner: ${{ github.repository_owner }}
-        package-name: ${{ env.PACKAGE_NAME_LC }}-${{ matrix.tag }}
+        package-name: ${{ env.PACKAGE_NAME_LC }}-${{ matrix.tag }}-snapshot
         package-type: container
-        min-versions-to-keep: 1
+        min-versions-to-keep: 10
         delete-only-untagged-versions: 'true'
