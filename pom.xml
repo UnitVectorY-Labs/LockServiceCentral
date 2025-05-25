@@ -51,7 +51,7 @@
         <jsonschema4springboot.version>0.0.4</jsonschema4springboot.version>
         <spring-cloud-gcp-dependencies.version>6.2.1</spring-cloud-gcp-dependencies.version>
         <consistgen.version>0.0.7</consistgen.version>
-        <fileparamunit.version>0.0.5</fileparamunit.version>
+        <fileparamunit.version>0.0.6</fileparamunit.version>
     </properties>
 
     <dependencyManagement>
