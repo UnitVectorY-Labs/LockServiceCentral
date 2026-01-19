@@ -21,6 +21,8 @@ jobs:
             tag: memory
           - profile: firestore
             tag: firestore
+          - profile: etcd
+            tag: etcd
 
     steps:
     - name: Checkout code

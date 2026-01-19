@@ -105,6 +105,17 @@
                 </dependency>
             </dependencies>
         </profile>
+        <profile>
+            <id>etcd</id>
+            <dependencies>
+                <dependency>
+                    <groupId>com.unitvectory.lockservicecentral</groupId>
+                    <artifactId>locker-etcd</artifactId>
+                    <version>${project.version}</version>
+                    <scope>runtime</scope>
+                </dependency>
+            </dependencies>
+        </profile>
     </profiles>
 
     <build>
