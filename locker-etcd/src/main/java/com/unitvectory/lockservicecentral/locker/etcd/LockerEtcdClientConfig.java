@@ -14,8 +14,6 @@
 package com.unitvectory.lockservicecentral.locker.etcd;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -25,7 +23,6 @@ import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.Client;
 import io.etcd.jetcd.ClientBuilder;
 import io.grpc.netty.GrpcSslContexts;
-import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import lombok.extern.slf4j.Slf4j;
 
@@ -78,21 +75,15 @@ public class LockerEtcdClientConfig {
 				SslContextBuilder sslBuilder = GrpcSslContexts.forClient();
 
 				if (caCertPath != null && !caCertPath.isEmpty()) {
-					try (InputStream caInputStream = new FileInputStream(new File(caCertPath))) {
-						sslBuilder.trustManager(caInputStream);
-					}
+					sslBuilder.trustManager(new File(caCertPath));
 				}
 
 				if (clientCertPath != null && !clientCertPath.isEmpty()
 						&& clientKeyPath != null && !clientKeyPath.isEmpty()) {
-					try (InputStream certInputStream = new FileInputStream(new File(clientCertPath));
-							InputStream keyInputStream = new FileInputStream(new File(clientKeyPath))) {
-						sslBuilder.keyManager(certInputStream, keyInputStream);
-					}
+					sslBuilder.keyManager(new File(clientCertPath), new File(clientKeyPath));
 				}
 
-				SslContext sslContext = sslBuilder.build();
-				builder.sslContext(sslContext);
+				builder.sslContext(sslBuilder.build());
 			} catch (Exception e) {
 				log.error("Failed to configure TLS for etcd client", e);
 				throw new RuntimeException("Failed to configure TLS for etcd client", e);
