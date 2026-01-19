@@ -29,6 +29,7 @@
             <id>everything</id>
             <modules>
                 <module>locker-firestore</module>
+                <module>locker-etcd</module>
             </modules>
         </profile>
         <!-- Each locker specific profile will build the API with that implementation embedded-->
@@ -39,6 +40,12 @@
             <id>firestore</id>
             <modules>
                 <module>locker-firestore</module>
+            </modules>
+        </profile>
+        <profile>
+            <id>etcd</id>
+            <modules>
+                <module>locker-etcd</module>
             </modules>
         </profile>
     </profiles>
@@ -56,6 +63,14 @@
 
     <dependencyManagement>
         <dependencies>
+            <!-- Netty BOM for version 4.2.x to support Vert.x 5.x used by jetcd -->
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-bom</artifactId>
+                <version>4.2.9.Final</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
             <dependency>
                 <groupId>org.junit</groupId>
                 <artifactId>junit-bom</artifactId>
@@ -88,6 +103,7 @@
         </dependencies>
     </dependencyManagement>
 
+    
     <build>
         <plugins>
             <plugin>
