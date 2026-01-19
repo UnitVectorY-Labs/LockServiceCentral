@@ -160,7 +160,7 @@ public class FirestoreLockService implements LockService {
                         transaction.set(docRef, data);
 
                         lock.setSuccess();
-                        log.info("Lock acquired: {}", lock);
+                        log.info("Lock renewed: {}", lock);
                     }
                 }
                 return null;
@@ -188,7 +188,7 @@ public class FirestoreLockService implements LockService {
                 var snapshot = transaction.get(docRef).get();
 
                 if (!snapshot.exists()) {
-                    // Lock doesn't exist, so it cannot be renewed
+                    // Lock doesn't exist, so it is already released
                     lock.setCleared();
                     log.info("Lock released: {}", lock);
                 } else {
@@ -212,7 +212,7 @@ public class FirestoreLockService implements LockService {
                 return null;
             }).get();
         } catch (InterruptedException | ExecutionException e) {
-            log.error("Error renewing lock: {}", lock, e);
+            log.error("Error releasing lock: {}", lock, e);
             lock.setFailed();
         }
 

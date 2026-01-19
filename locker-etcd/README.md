@@ -2,6 +2,26 @@
 
 etcd backend implementation for LockServiceCentral.
 
+## Quick Start
+
+Build and run with the etcd backend:
+
+```bash
+mvn clean package -DskipTests -Petcd -ntp
+SPRING_PROFILES_ACTIVE=etcd LOCKER_ETCD_ENDPOINTS=http://localhost:2379 AUTHENTICATION_DISABLED=true java -jar ./api/target/api-0.0.1-SNAPSHOT.jar
+```
+
+Or with Docker:
+
+```bash
+docker build --build-arg LOCKER=etcd -t lockservicecentral-etcd .
+docker run -p 8080:8080 \
+  -e SPRING_PROFILES_ACTIVE=etcd \
+  -e LOCKER_ETCD_ENDPOINTS=http://host.docker.internal:2379 \
+  -e AUTHENTICATION_DISABLED=true \
+  lockservicecentral-etcd
+```
+
 ## Overview
 
 This module provides a distributed lock implementation backed by [etcd](https://etcd.io/), a distributed key-value store. It uses the [jetcd](https://github.com/etcd-io/jetcd) client library to communicate with the etcd cluster.
@@ -78,13 +98,24 @@ Lock data is serialized as JSON and stored in etcd. The stored fields are:
 Build the etcd-enabled API jar:
 
 ```bash
-mvn clean package -P etcd
+mvn clean package -DskipTests -Petcd -ntp
+java -jar ./api/target/api-0.0.1-SNAPSHOT.jar
 ```
 
 Build Docker image:
 
 ```bash
 docker build --build-arg LOCKER=etcd -t lockservicecentral-etcd .
+```
+
+Run with Docker:
+
+```bash
+docker run -p 8080:8080 \
+  -e SPRING_PROFILES_ACTIVE=etcd \
+  -e LOCKER_ETCD_ENDPOINTS=http://host.docker.internal:2379 \
+  -e AUTHENTICATION_DISABLED=true \
+  lockservicecentral-etcd
 ```
 
 ## Example Configuration
