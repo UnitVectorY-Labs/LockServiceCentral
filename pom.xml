@@ -63,6 +63,14 @@
 
     <dependencyManagement>
         <dependencies>
+            <!-- Netty BOM for version 4.2.x to support Vert.x 5.x used by jetcd -->
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-bom</artifactId>
+                <version>4.2.9.Final</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
             <dependency>
                 <groupId>org.junit</groupId>
                 <artifactId>junit-bom</artifactId>
@@ -95,6 +103,7 @@
         </dependencies>
     </dependencyManagement>
 
+    
     <build>
         <plugins>
             <plugin>

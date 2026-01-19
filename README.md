@@ -58,29 +58,3 @@ docker build --build-arg LOCKER=firestore -t lockservicecentral-firestore .
 # etcd backend
 docker build --build-arg LOCKER=etcd -t lockservicecentral-etcd .
 ```
-
-## Configuration
-
-### etcd Backend
-
-Configure the etcd backend using the following properties:
-
-```properties
-# etcd endpoints (comma-separated for cluster)
-locker.etcd.endpoints=http://etcd:2379
-
-# Key prefix (optional)
-locker.etcd.keyPrefix=locks/
-
-# TLS (optional)
-locker.etcd.tls.enabled=true
-locker.etcd.tls.caCertPath=/path/to/ca.pem
-locker.etcd.tls.clientCertPath=/path/to/client.pem
-locker.etcd.tls.clientKeyPath=/path/to/client-key.pem
-
-# Authentication (optional)
-locker.etcd.auth.username=user
-locker.etcd.auth.password=password
-```
-
-See [locker-etcd/README.md](locker-etcd/README.md) for detailed configuration options.
