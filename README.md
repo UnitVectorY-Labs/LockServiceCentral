@@ -18,6 +18,10 @@ In distributed systems, managing concurrent access to shared resources is critic
 - **RESTful Interface:** Standardized API endpoints for lock management.
 - **Lease-Based Locking:** Locks are held for a specified duration, automatically expiring if not renewed or released.
 
+## API Documentation
+
+The API documentation is available via Swagger UI at the root of the running service. Once the application is started, navigate to the root URL (e.g., `http://localhost:8080/`) to access the interactive Swagger UI, which provides detailed documentation for all API endpoints and allows testing the API directly from the browser.
+
 ## Supported Backends
 
 | Backend | Module | Description |
