@@ -50,28 +50,28 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ValidateJsonSchemaException.class)
     public ResponseEntity<ValidateJsonSchemaFailedResponse> onValidateJsonSchemaException(
             ValidateJsonSchemaException ex) {
-        enrichCanonicalContextForValidationError(ex);
+        enrichCanonicalContextForValidationError();
         return ResponseEntity.badRequest().body(new ValidateJsonSchemaFailedResponse(ex));
     }
 
     @ExceptionHandler(HandlerMethodValidationException.class)
     public ResponseEntity<ValidationErrorResponse> onHandlerMethodValidationException(
             HandlerMethodValidationException ex) {
-        enrichCanonicalContextForValidationError(ex);
+        enrichCanonicalContextForValidationError();
         return ResponseEntity.badRequest().body(new ValidationErrorResponse(ex));
     }
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<InternalErrorResponse> onHttpRequestMethodNotSupportedException(
             HttpRequestMethodNotSupportedException ex) {
-        enrichCanonicalContextForError(ex);
+        // Don't log stack trace for client errors like 405
         return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)
                 .body(new InternalErrorResponse(this.uuidGenerator.generateUuid(), "Method not allowed"));
     }
 
     @ExceptionHandler(NoResourceFoundException.class)
     public ResponseEntity<InternalErrorResponse> onNoResourceFoundException(NoResourceFoundException ex) {
-        enrichCanonicalContextForError(ex);
+        // Don't log stack trace for client errors like 404
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(new InternalErrorResponse(this.uuidGenerator.generateUuid(), "Resource not found"));
     }
@@ -92,28 +92,12 @@ public class GlobalExceptionHandler {
 
     /**
      * Enriches the canonical log context for validation errors.
-     * 
-     * @param ex the validation exception
+     * Only sets error_type, no stack trace for client validation errors.
      */
-    private void enrichCanonicalContextForValidationError(Exception ex) {
+    private void enrichCanonicalContextForValidationError() {
         try {
             CanonicalLogContext context = canonicalLogContextProvider.getObject();
             context.put("error_type", "validation_error");
-            context.put("exception", CanonicalLogContext.exceptionToStackTrace(ex));
-        } catch (Exception e) {
-            // Don't break error handling if logging fails
-        }
-    }
-
-    /**
-     * Enriches the canonical log context for general errors.
-     * 
-     * @param ex the exception
-     */
-    private void enrichCanonicalContextForError(Exception ex) {
-        try {
-            CanonicalLogContext context = canonicalLogContextProvider.getObject();
-            context.put("exception", CanonicalLogContext.exceptionToStackTrace(ex));
         } catch (Exception e) {
             // Don't break error handling if logging fails
         }

@@ -100,8 +100,9 @@ public class CanonicalEmitInterceptor implements HandlerInterceptor {
             String outcome = determineOutcome(statusCode, ex);
             context.put("outcome", outcome);
             
-            // Add error fields if exception present
-            if (ex != null) {
+            // Only add exception stack traces for server errors (5xx status codes)
+            // Don't log stack traces for client errors like 404, 400, etc.
+            if (ex != null && statusCode >= 500) {
                 context.put("exception", CanonicalLogContext.exceptionToStackTrace(ex));
             }
             
