@@ -17,12 +17,12 @@
     <description>LockServiceCentral</description>
 
     <modules>
-        <module>api</module>
         <module>locker</module>
+        <module>logging</module>
         <module>locker-tests</module>
         <!-- The memory module is used for testing -->
         <module>locker-memory</module>
-        <module>logging</module>
+        <module>api</module>
     </modules>
     <profiles>
         <!-- The 'everything' profile builds all of the lockers for testing -->

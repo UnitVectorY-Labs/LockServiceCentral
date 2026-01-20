@@ -13,6 +13,7 @@
  */
 package com.unitvectory.lockservicecentral.locker.firestore;
 
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -20,6 +21,7 @@ import org.springframework.context.annotation.Configuration;
 
 import com.google.cloud.firestore.Firestore;
 import com.unitvectory.lockservicecentral.locker.LockService;
+import com.unitvectory.lockservicecentral.logging.CanonicalLogContext;
 
 /**
  * The Configuration for the Firestore LockService.
@@ -36,7 +38,7 @@ public class LockerGcpConfig {
 	private String collectionLocks;
 
 	@Bean
-	public LockService lockService() {
-		return new FirestoreLockService(this.firestore, this.collectionLocks);
+	public LockService lockService(ObjectProvider<CanonicalLogContext> canonicalLogContextProvider) {
+		return new FirestoreLockService(this.firestore, this.collectionLocks, canonicalLogContextProvider);
 	}
 }

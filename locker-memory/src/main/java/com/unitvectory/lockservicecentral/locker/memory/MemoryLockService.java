@@ -15,22 +15,47 @@ package com.unitvectory.lockservicecentral.locker.memory;
 
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.springframework.beans.factory.ObjectProvider;
+
 import com.unitvectory.lockservicecentral.locker.Lock;
 import com.unitvectory.lockservicecentral.locker.LockService;
+import com.unitvectory.lockservicecentral.logging.CanonicalLogContext;
 
 import lombok.NonNull;
 import lombok.Synchronized;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * The Memory based LockService.
  * 
  * @author Jared Hatfield (UnitVectorY Labs)
  */
-@Slf4j
 public class MemoryLockService implements LockService {
 
     private final ConcurrentHashMap<String, Lock> locks = new ConcurrentHashMap<>();
+    private final ObjectProvider<CanonicalLogContext> canonicalLogContextProvider;
+
+    /**
+     * Constructs a new MemoryLockService.
+     * 
+     * @param canonicalLogContextProvider provider for the canonical log context
+     */
+    public MemoryLockService(ObjectProvider<CanonicalLogContext> canonicalLogContextProvider) {
+        this.canonicalLogContextProvider = canonicalLogContextProvider;
+    }
+
+    /**
+     * Records the lock service outcome to the canonical log context.
+     * 
+     * @param outcome the screaming snake case outcome
+     */
+    private void recordOutcome(String outcome) {
+        try {
+            CanonicalLogContext context = canonicalLogContextProvider.getObject();
+            context.put("lock_service_outcome", outcome);
+        } catch (Exception e) {
+            // Don't break lock operations if logging fails
+        }
+    }
 
     private void save(Lock lock) {
         String key = generateKey(lock.getNamespace(), lock.getLockName());
@@ -95,17 +120,17 @@ public class MemoryLockService implements LockService {
             if (existingLock.isMatch(lock) || existingLock.isExpired(now)) {
                 this.save(lock);
                 lock.setSuccess();
-                log.info("Lock replaced: {}", lock);
+                recordOutcome("LOCK_REPLACED");
             } else {
                 // If there's a conflict, return failure
-                log.warn("Lock conflict: {}", lock);
+                recordOutcome("ACQUIRE_CONFLICT");
                 lock.setFailed();
             }
         } else {
             // If no lock exists, acquire it
             this.save(lock);
             lock.setSuccess();
-            log.info("Lock acquired: {}", lock);
+            recordOutcome("ACQUIRED");
         }
 
         return lock.copy();
@@ -127,7 +152,7 @@ public class MemoryLockService implements LockService {
         // Check if the lock exists and is still valid
         Lock existingLock = get(key);
         if (existingLock == null || !existingLock.isActive(now) || !lock.isMatch(existingLock)) {
-            log.warn("Cannot renew lock: {}", lock);
+            recordOutcome("RENEW_FAILED");
             lock.setFailed();
             return lock;
         }
@@ -144,7 +169,7 @@ public class MemoryLockService implements LockService {
 
         this.save(lock);
 
-        log.info("Lock renewed: {}", lock);
+        recordOutcome("RENEWED");
         return lock;
     }
 
@@ -167,10 +192,10 @@ public class MemoryLockService implements LockService {
             // Lock is expired, so it is already released
             locks.remove(key);
             lock.setCleared();
-            log.info("Lock released: {}", lock);
+            recordOutcome("RELEASED_EXPIRED");
             return lock.copy();
         } else if (!lock.isMatch(existingLock)) {
-            log.warn("Cannot release lock: {}", lock);
+            recordOutcome("RELEASE_CONFLICT");
             lock.setFailed();
             return lock;
         }
@@ -178,7 +203,7 @@ public class MemoryLockService implements LockService {
         // Release the lock
         locks.remove(key);
         lock.setCleared();
-        log.info("Lock released: {}", lock);
+        recordOutcome("RELEASED");
         return lock.copy();
     }
 

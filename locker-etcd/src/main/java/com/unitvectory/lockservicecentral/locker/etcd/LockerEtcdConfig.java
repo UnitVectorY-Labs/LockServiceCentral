@@ -13,12 +13,14 @@
  */
 package com.unitvectory.lockservicecentral.locker.etcd;
 
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import com.unitvectory.lockservicecentral.locker.LockService;
+import com.unitvectory.lockservicecentral.logging.CanonicalLogContext;
 
 import io.etcd.jetcd.Client;
 
@@ -43,7 +45,8 @@ public class LockerEtcdConfig {
 	private long requestTimeoutMs;
 
 	@Bean
-	public LockService lockService() {
-		return new EtcdLockService(this.etcdClient, this.keyPrefix, this.maxRetries, this.requestTimeoutMs);
+	public LockService lockService(ObjectProvider<CanonicalLogContext> canonicalLogContextProvider) {
+		return new EtcdLockService(this.etcdClient, this.keyPrefix, this.maxRetries, this.requestTimeoutMs,
+				canonicalLogContextProvider);
 	}
 }

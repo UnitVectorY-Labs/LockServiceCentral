@@ -16,14 +16,16 @@ package com.unitvectory.lockservicecentral.locker.firestore;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
+import org.springframework.beans.factory.ObjectProvider;
+
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.Transaction;
 import com.unitvectory.lockservicecentral.locker.Lock;
 import com.unitvectory.lockservicecentral.locker.LockService;
+import com.unitvectory.lockservicecentral.logging.CanonicalLogContext;
 
-import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
@@ -32,13 +34,40 @@ import lombok.extern.slf4j.Slf4j;
  * 
  * @author Jared Hatfield (UnitVectorY Labs)
  */
-@AllArgsConstructor
 @Slf4j
 public class FirestoreLockService implements LockService {
 
-    private Firestore firestore;
+    private final Firestore firestore;
+    private final String collectionLocks;
+    private final ObjectProvider<CanonicalLogContext> canonicalLogContextProvider;
 
-    private String collectionLocks;
+    /**
+     * Constructs a new FirestoreLockService.
+     * 
+     * @param firestore the Firestore client
+     * @param collectionLocks the collection name for locks
+     * @param canonicalLogContextProvider provider for the canonical log context
+     */
+    public FirestoreLockService(Firestore firestore, String collectionLocks,
+            ObjectProvider<CanonicalLogContext> canonicalLogContextProvider) {
+        this.firestore = firestore;
+        this.collectionLocks = collectionLocks;
+        this.canonicalLogContextProvider = canonicalLogContextProvider;
+    }
+
+    /**
+     * Records the lock service outcome to the canonical log context.
+     * 
+     * @param outcome the screaming snake case outcome
+     */
+    private void recordOutcome(String outcome) {
+        try {
+            CanonicalLogContext context = canonicalLogContextProvider.getObject();
+            context.put("lock_service_outcome", outcome);
+        } catch (Exception e) {
+            // Don't break lock operations if logging fails
+        }
+    }
 
     public Lock getLock(@NonNull String namespace, @NonNull String lockName) {
         // Firestore document reference for the lock, structured by namespace and lock
@@ -83,7 +112,7 @@ public class FirestoreLockService implements LockService {
                     // New record
                     transaction.set(docRef, data);
                     lock.setSuccess();
-                    log.info("Lock acquired: {}", lock);
+                    recordOutcome("ACQUIRED");
                 } else {
                     Lock existingLock = new Lock(snapshot.getData());
 
@@ -92,17 +121,17 @@ public class FirestoreLockService implements LockService {
                         // expiry
                         transaction.set(docRef, data);
                         lock.setSuccess();
-                        log.info("Lock already acquired: {}", lock);
+                        recordOutcome("LOCK_REPLACED");
 
                     } else if (!existingLock.isExpired(now)) {
                         // Lock is still valid, return conflict
                         lock.setFailed();
-                        log.warn("Lock conflict, cannot acquire: {}", lock);
+                        recordOutcome("ACQUIRE_CONFLICT");
                     } else {
                         // Lock is expired, so we can acquire it
                         transaction.set(docRef, data);
                         lock.setSuccess();
-                        log.info("Lock acquired: {}", lock);
+                        recordOutcome("ACQUIRED");
                     }
                 }
                 return null;
@@ -110,6 +139,7 @@ public class FirestoreLockService implements LockService {
         } catch (InterruptedException | ExecutionException e) {
             log.error("Error acquiring lock: {}", lock, e);
             lock.setFailed();
+            recordOutcome("ACQUIRE_ERROR");
         }
 
         return lock;
@@ -132,18 +162,18 @@ public class FirestoreLockService implements LockService {
                 if (!snapshot.exists()) {
                     // Lock doesn't exist, so it cannot be renewed
                     lock.setFailed();
-                    log.warn("Lock does not exist, cannot renew: {}", lock);
+                    recordOutcome("RENEW_NOT_FOUND");
                 } else {
                     Lock existingLock = new Lock(snapshot.getData());
 
                     if (!lock.isMatch(existingLock)) {
                         // Lock doesn't match, so it cannot be renewed
                         lock.setFailed();
-                        log.warn("Lock does not match, cannot renew: {}", lock);
+                        recordOutcome("RENEW_MISMATCH");
                     } else if (existingLock.isExpired(now)) {
                         // Lock is expired, so it cannot be renewed
                         lock.setFailed();
-                        log.warn("Expired lock cannot be extended: {}", lock);
+                        recordOutcome("RENEW_EXPIRED");
                     } else {
                         // Successfully renew the lock
                         long newLeaseDuration = existingLock.getLeaseDuration() + lock.getLeaseDuration();
@@ -160,7 +190,7 @@ public class FirestoreLockService implements LockService {
                         transaction.set(docRef, data);
 
                         lock.setSuccess();
-                        log.info("Lock renewed: {}", lock);
+                        recordOutcome("RENEWED");
                     }
                 }
                 return null;
@@ -168,6 +198,7 @@ public class FirestoreLockService implements LockService {
         } catch (InterruptedException | ExecutionException e) {
             log.error("Error renewing lock: {}", lock, e);
             lock.setFailed();
+            recordOutcome("RENEW_ERROR");
         }
 
         return lock;
@@ -190,23 +221,23 @@ public class FirestoreLockService implements LockService {
                 if (!snapshot.exists()) {
                     // Lock doesn't exist, so it is already released
                     lock.setCleared();
-                    log.info("Lock released: {}", lock);
+                    recordOutcome("RELEASED_NOT_FOUND");
                 } else {
                     Lock existingLock = new Lock(snapshot.getData());
 
                     if (existingLock.isExpired(now)) {
                         // Lock is expired, so it is already released
                         lock.setCleared();
-                        log.info("Lock released: {}", lock);
+                        recordOutcome("RELEASED_EXPIRED");
                     } else if (!lock.isMatch(existingLock)) {
                         // Lock doesn't match, so it cannot be released
                         lock.setFailed();
-                        log.warn("Lock does not match, cannot clear: {}", lock);
+                        recordOutcome("RELEASE_CONFLICT");
                     } else {
                         // Successfully release the lock by deleting the document
                         transaction.delete(docRef);
                         lock.setCleared();
-                        log.info("Lock cleared: {}", lock);
+                        recordOutcome("RELEASED");
                     }
                 }
                 return null;
@@ -214,6 +245,7 @@ public class FirestoreLockService implements LockService {
         } catch (InterruptedException | ExecutionException e) {
             log.error("Error releasing lock: {}", lock, e);
             lock.setFailed();
+            recordOutcome("RELEASE_ERROR");
         }
 
         return lock;

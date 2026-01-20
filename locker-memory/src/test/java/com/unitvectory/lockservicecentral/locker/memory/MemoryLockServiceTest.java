@@ -13,8 +13,11 @@
  */
 package com.unitvectory.lockservicecentral.locker.memory;
 
+import org.springframework.beans.factory.ObjectProvider;
+
 import com.unitvectory.lockservicecentral.locker.LockService;
 import com.unitvectory.lockservicecentral.locker.tests.AbstractLockServiceTest;
+import com.unitvectory.lockservicecentral.logging.CanonicalLogContext;
 
 /**
  * The MemoryLockService test.
@@ -25,6 +28,28 @@ public class MemoryLockServiceTest extends AbstractLockServiceTest {
 
     @Override
     protected LockService createLockService() {
-        return new MemoryLockService();
+        // Use a no-op ObjectProvider for testing
+        ObjectProvider<CanonicalLogContext> noOpProvider = new ObjectProvider<>() {
+            @Override
+            public CanonicalLogContext getObject() {
+                return new CanonicalLogContext();
+            }
+
+            @Override
+            public CanonicalLogContext getObject(Object... args) {
+                return new CanonicalLogContext();
+            }
+
+            @Override
+            public CanonicalLogContext getIfAvailable() {
+                return new CanonicalLogContext();
+            }
+
+            @Override
+            public CanonicalLogContext getIfUnique() {
+                return new CanonicalLogContext();
+            }
+        };
+        return new MemoryLockService(noOpProvider);
     }
 }

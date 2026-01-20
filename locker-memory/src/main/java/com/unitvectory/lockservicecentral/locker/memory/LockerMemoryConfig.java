@@ -13,10 +13,12 @@
  */
 package com.unitvectory.lockservicecentral.locker.memory;
 
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import com.unitvectory.lockservicecentral.locker.LockService;
+import com.unitvectory.lockservicecentral.logging.CanonicalLogContext;
 
 /**
  * The Configuration for the Memory LockService.
@@ -27,7 +29,7 @@ import com.unitvectory.lockservicecentral.locker.LockService;
 public class LockerMemoryConfig {
 
 	@Bean
-	public LockService lockService() {
-		return new MemoryLockService();
+	public LockService lockService(ObjectProvider<CanonicalLogContext> canonicalLogContextProvider) {
+		return new MemoryLockService(canonicalLogContextProvider);
 	}
 }
