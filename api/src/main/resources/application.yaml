@@ -1,0 +1,8 @@
+spring:
+  application:
+    name: lockservicecentral
+
+app:
+  env: ${APP_ENV:dev}
+  region: ${APP_REGION:local}
+  version: ${APP_VERSION:0.0.1-SNAPSHOT}
