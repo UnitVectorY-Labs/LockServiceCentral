@@ -13,10 +13,6 @@
  */
 package com.unitvectory.lockservicecentral.api.controller;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -33,6 +29,7 @@ import com.unitvectory.jsonschema4springboot.ValidateJsonSchemaVersion;
 import com.unitvectory.lockservicecentral.api.service.LockManagerService;
 import com.unitvectory.lockservicecentral.locker.Lock;
 import com.unitvectory.lockservicecentral.logging.CanonicalLogContext;
+import com.unitvectory.lockservicecentral.logging.HashUtil;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
@@ -195,36 +192,12 @@ public class LockController {
         
         // Instance ID hash (never log raw instance_id)
         if (instanceId != null) {
-            context.put("instance_id_hash", sha256Hex(instanceId));
+            context.put("instance_id_hash", HashUtil.sha256Hex(instanceId));
         }
         
         // Requested lease duration for POST operations
         if (leaseDuration != null) {
             context.put("requested_lease_duration_sec", leaseDuration);
-        }
-    }
-
-    /**
-     * Computes SHA-256 hex digest of a string.
-     * 
-     * @param input the input string
-     * @return the hex digest
-     */
-    private static String sha256Hex(String input) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(input.getBytes(StandardCharsets.UTF_8));
-            StringBuilder hexString = new StringBuilder();
-            for (byte b : hash) {
-                String hex = Integer.toHexString(0xff & b);
-                if (hex.length() == 1) {
-                    hexString.append('0');
-                }
-                hexString.append(hex);
-            }
-            return hexString.toString();
-        } catch (NoSuchAlgorithmException e) {
-            return "hash_error";
         }
     }
 }
