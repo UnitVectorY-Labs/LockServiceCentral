@@ -22,8 +22,10 @@ import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.ObjectProvider;
 
 import com.unitvectory.lockservicecentral.locker.Lock;
+import com.unitvectory.lockservicecentral.logging.CanonicalLogContext;
 
 import io.etcd.jetcd.Client;
 import io.etcd.jetcd.KV;
@@ -46,7 +48,29 @@ public class EtcdLockServiceTest {
         when(mockKvClient.get(any())).thenReturn(CompletableFuture.completedFuture(mockGetResponse));
         when(mockGetResponse.getKvs()).thenReturn(Collections.emptyList());
 
-        EtcdLockService service = new EtcdLockService(mockClient, "locks/", 3, 5000);
+        // Use a no-op ObjectProvider for testing
+        ObjectProvider<CanonicalLogContext> noOpProvider = new ObjectProvider<>() {
+            @Override
+            public CanonicalLogContext getObject() {
+                return new CanonicalLogContext();
+            }
+
+            @Override
+            public CanonicalLogContext getObject(Object... args) {
+                return new CanonicalLogContext();
+            }
+
+            @Override
+            public CanonicalLogContext getIfAvailable() {
+                return new CanonicalLogContext();
+            }
+
+            @Override
+            public CanonicalLogContext getIfUnique() {
+                return new CanonicalLogContext();
+            }
+        };
+        EtcdLockService service = new EtcdLockService(mockClient, "locks/", 3, 5000, noOpProvider);
 
         // Call the method under test
         Lock lock = service.getLock("foo", "bar");

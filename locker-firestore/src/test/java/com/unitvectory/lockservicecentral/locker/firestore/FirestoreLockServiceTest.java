@@ -20,6 +20,7 @@ import static org.mockito.Mockito.when;
 import java.util.concurrent.ExecutionException;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.ObjectProvider;
 
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.CollectionReference;
@@ -27,6 +28,7 @@ import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
 import com.unitvectory.lockservicecentral.locker.Lock;
+import com.unitvectory.lockservicecentral.logging.CanonicalLogContext;
 
 /**
  * The FirestoreLockService test.
@@ -38,7 +40,29 @@ public class FirestoreLockServiceTest {
     @Test
     public void getLockTest() throws InterruptedException, ExecutionException {
         Firestore mockFirestore = mock(Firestore.class);
-        FirestoreLockService service = new FirestoreLockService(mockFirestore, "locks");
+        // Use a no-op ObjectProvider for testing
+        ObjectProvider<CanonicalLogContext> noOpProvider = new ObjectProvider<>() {
+            @Override
+            public CanonicalLogContext getObject() {
+                return new CanonicalLogContext();
+            }
+
+            @Override
+            public CanonicalLogContext getObject(Object... args) {
+                return new CanonicalLogContext();
+            }
+
+            @Override
+            public CanonicalLogContext getIfAvailable() {
+                return new CanonicalLogContext();
+            }
+
+            @Override
+            public CanonicalLogContext getIfUnique() {
+                return new CanonicalLogContext();
+            }
+        };
+        FirestoreLockService service = new FirestoreLockService(mockFirestore, "locks", noOpProvider);
 
         // Mock the CollectionReference
         CollectionReference mockCollectionRef = mock(CollectionReference.class);
