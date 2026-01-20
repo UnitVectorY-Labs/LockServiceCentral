@@ -14,9 +14,11 @@
 package com.unitvectory.lockservicecentral.locker.etcd;
 
 import org.junit.jupiter.api.Disabled;
+import org.springframework.beans.factory.ObjectProvider;
 
 import com.unitvectory.lockservicecentral.locker.LockService;
 import com.unitvectory.lockservicecentral.locker.tests.AbstractLockServiceTest;
+import com.unitvectory.lockservicecentral.logging.CanonicalLogContext;
 
 import io.etcd.jetcd.Client;
 
@@ -36,7 +38,29 @@ public class EtcdLockServiceActualTest extends AbstractLockServiceTest {
         Client client = Client.builder()
                 .endpoints("http://localhost:2379")
                 .build();
-        return new EtcdLockService(client, "locks/", 3, 5000);
+        // Use a no-op ObjectProvider for testing
+        ObjectProvider<CanonicalLogContext> noOpProvider = new ObjectProvider<>() {
+            @Override
+            public CanonicalLogContext getObject() {
+                return new CanonicalLogContext();
+            }
+
+            @Override
+            public CanonicalLogContext getObject(Object... args) {
+                return new CanonicalLogContext();
+            }
+
+            @Override
+            public CanonicalLogContext getIfAvailable() {
+                return new CanonicalLogContext();
+            }
+
+            @Override
+            public CanonicalLogContext getIfUnique() {
+                return new CanonicalLogContext();
+            }
+        };
+        return new EtcdLockService(client, "locks/", 3, 5000, noOpProvider);
     }
 
 }

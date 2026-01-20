@@ -21,11 +21,14 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.springframework.beans.factory.ObjectProvider;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.unitvectory.lockservicecentral.locker.Lock;
 import com.unitvectory.lockservicecentral.locker.LockService;
+import com.unitvectory.lockservicecentral.logging.CanonicalLogContext;
 
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.Client;
@@ -40,7 +43,6 @@ import io.etcd.jetcd.op.Cmp;
 import io.etcd.jetcd.op.CmpTarget;
 import io.etcd.jetcd.op.Op;
 import io.etcd.jetcd.options.PutOption;
-import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
@@ -49,7 +51,6 @@ import lombok.extern.slf4j.Slf4j;
  * 
  * @author Jared Hatfield (UnitVectorY Labs)
  */
-@AllArgsConstructor
 @Slf4j
 public class EtcdLockService implements LockService {
 
@@ -57,10 +58,43 @@ public class EtcdLockService implements LockService {
     private static final TypeReference<Map<String, Object>> MAP_TYPE_REF = new TypeReference<>() {
     };
 
-    private Client client;
-    private String keyPrefix;
-    private int maxRetries;
-    private long requestTimeoutMs;
+    private final Client client;
+    private final String keyPrefix;
+    private final int maxRetries;
+    private final long requestTimeoutMs;
+    private final ObjectProvider<CanonicalLogContext> canonicalLogContextProvider;
+
+    /**
+     * Constructs a new EtcdLockService.
+     * 
+     * @param client the etcd client
+     * @param keyPrefix the key prefix for locks
+     * @param maxRetries the maximum number of retries
+     * @param requestTimeoutMs the request timeout in milliseconds
+     * @param canonicalLogContextProvider provider for the canonical log context
+     */
+    public EtcdLockService(Client client, String keyPrefix, int maxRetries, long requestTimeoutMs,
+            ObjectProvider<CanonicalLogContext> canonicalLogContextProvider) {
+        this.client = client;
+        this.keyPrefix = keyPrefix;
+        this.maxRetries = maxRetries;
+        this.requestTimeoutMs = requestTimeoutMs;
+        this.canonicalLogContextProvider = canonicalLogContextProvider;
+    }
+
+    /**
+     * Records the lock service outcome to the canonical log context.
+     * 
+     * @param outcome the screaming snake case outcome
+     */
+    private void recordOutcome(String outcome) {
+        try {
+            CanonicalLogContext context = canonicalLogContextProvider.getObject();
+            context.put("lock_service_outcome", outcome);
+        } catch (Exception e) {
+            // Don't break lock operations if logging fails
+        }
+    }
 
     /**
      * Generates the etcd key for a lock based on namespace and lock name.
@@ -172,7 +206,7 @@ public class EtcdLockService implements LockService {
                 if (!canAcquire) {
                     // Lock conflict
                     lock.setFailed();
-                    log.warn("Lock conflict, cannot acquire: {}", lock);
+                    recordOutcome("ACQUIRE_CONFLICT");
                     return lock;
                 }
 
@@ -212,7 +246,7 @@ public class EtcdLockService implements LockService {
 
                 if (txnResponse.isSucceeded()) {
                     lock.setSuccess();
-                    log.info("Lock acquired: {}", lock);
+                    recordOutcome("ACQUIRED");
                     return lock;
                 } else {
                     // CAS failed, retry
@@ -223,6 +257,7 @@ public class EtcdLockService implements LockService {
             } catch (InterruptedException | ExecutionException | TimeoutException | JsonProcessingException e) {
                 log.error("Error acquiring lock: {}", lock, e);
                 lock.setFailed();
+                recordOutcome("ACQUIRE_ERROR");
                 return lock;
             }
         }
@@ -230,6 +265,7 @@ public class EtcdLockService implements LockService {
         // Max retries exceeded
         log.error("Max retries exceeded acquiring lock: {}", lock);
         lock.setFailed();
+        recordOutcome("ACQUIRE_MAX_RETRIES");
         return lock;
     }
 
@@ -249,7 +285,7 @@ public class EtcdLockService implements LockService {
                 if (getResponse.getKvs().isEmpty()) {
                     // Lock doesn't exist
                     lock.setFailed();
-                    log.warn("Lock does not exist, cannot renew: {}", lock);
+                    recordOutcome("RENEW_NOT_FOUND");
                     return lock;
                 }
 
@@ -260,13 +296,13 @@ public class EtcdLockService implements LockService {
                 // Check if we can renew
                 if (!lock.isMatch(existingLock)) {
                     lock.setFailed();
-                    log.warn("Lock does not match, cannot renew: {}", lock);
+                    recordOutcome("RENEW_MISMATCH");
                     return lock;
                 }
 
                 if (existingLock.isExpired(now)) {
                     lock.setFailed();
-                    log.warn("Expired lock cannot be extended: {}", lock);
+                    recordOutcome("RENEW_EXPIRED");
                     return lock;
                 }
 
@@ -301,7 +337,7 @@ public class EtcdLockService implements LockService {
 
                 if (txnResponse.isSucceeded()) {
                     lock.setSuccess();
-                    log.info("Lock renewed: {}", lock);
+                    recordOutcome("RENEWED");
                     return lock;
                 } else {
                     // CAS failed, retry
@@ -312,6 +348,7 @@ public class EtcdLockService implements LockService {
             } catch (InterruptedException | ExecutionException | TimeoutException | JsonProcessingException e) {
                 log.error("Error renewing lock: {}", lock, e);
                 lock.setFailed();
+                recordOutcome("RENEW_ERROR");
                 return lock;
             }
         }
@@ -319,6 +356,7 @@ public class EtcdLockService implements LockService {
         // Max retries exceeded
         log.error("Max retries exceeded renewing lock: {}", lock);
         lock.setFailed();
+        recordOutcome("RENEW_MAX_RETRIES");
         return lock;
     }
 
@@ -337,7 +375,7 @@ public class EtcdLockService implements LockService {
                 if (getResponse.getKvs().isEmpty()) {
                     // Lock doesn't exist, already released
                     lock.setCleared();
-                    log.info("Lock released (not found): {}", lock);
+                    recordOutcome("RELEASED_NOT_FOUND");
                     return lock;
                 }
 
@@ -348,14 +386,14 @@ public class EtcdLockService implements LockService {
                 if (existingLock.isExpired(now)) {
                     // Lock is expired, already released
                     lock.setCleared();
-                    log.info("Lock released (expired): {}", lock);
+                    recordOutcome("RELEASED_EXPIRED");
                     return lock;
                 }
 
                 if (!lock.isMatch(existingLock)) {
                     // Lock doesn't match, cannot release
                     lock.setFailed();
-                    log.warn("Lock does not match, cannot release: {}", lock);
+                    recordOutcome("RELEASE_CONFLICT");
                     return lock;
                 }
 
@@ -369,7 +407,7 @@ public class EtcdLockService implements LockService {
 
                 if (txnResponse.isSucceeded()) {
                     lock.setCleared();
-                    log.info("Lock released: {}", lock);
+                    recordOutcome("RELEASED");
                     return lock;
                 } else {
                     // CAS failed, retry
@@ -379,6 +417,7 @@ public class EtcdLockService implements LockService {
             } catch (InterruptedException | ExecutionException | TimeoutException | JsonProcessingException e) {
                 log.error("Error releasing lock: {}", lock, e);
                 lock.setFailed();
+                recordOutcome("RELEASE_ERROR");
                 return lock;
             }
         }
@@ -386,6 +425,7 @@ public class EtcdLockService implements LockService {
         // Max retries exceeded
         log.error("Max retries exceeded releasing lock: {}", lock);
         lock.setFailed();
+        recordOutcome("RELEASE_MAX_RETRIES");
         return lock;
     }
 }

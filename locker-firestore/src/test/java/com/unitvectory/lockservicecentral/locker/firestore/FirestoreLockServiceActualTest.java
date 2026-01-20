@@ -14,10 +14,12 @@
 package com.unitvectory.lockservicecentral.locker.firestore;
 
 import org.junit.jupiter.api.Disabled;
+import org.springframework.beans.factory.ObjectProvider;
 
 import com.google.cloud.firestore.FirestoreOptions;
 import com.unitvectory.lockservicecentral.locker.LockService;
 import com.unitvectory.lockservicecentral.locker.tests.AbstractLockServiceTest;
+import com.unitvectory.lockservicecentral.logging.CanonicalLogContext;
 
 /**
  * The FirestoreLockService test.
@@ -32,8 +34,30 @@ public class FirestoreLockServiceActualTest extends AbstractLockServiceTest {
         // These tests are disabled because they require interaction with an actual
         // Firestore database to run. These are only intended to be used for manual
         // local testing.
+        // Use a no-op ObjectProvider for testing
+        ObjectProvider<CanonicalLogContext> noOpProvider = new ObjectProvider<>() {
+            @Override
+            public CanonicalLogContext getObject() {
+                return new CanonicalLogContext();
+            }
+
+            @Override
+            public CanonicalLogContext getObject(Object... args) {
+                return new CanonicalLogContext();
+            }
+
+            @Override
+            public CanonicalLogContext getIfAvailable() {
+                return new CanonicalLogContext();
+            }
+
+            @Override
+            public CanonicalLogContext getIfUnique() {
+                return new CanonicalLogContext();
+            }
+        };
         return new FirestoreLockService(FirestoreOptions.getDefaultInstance().toBuilder()
-                .build().getService(), "locks");
+                .build().getService(), "locks", noOpProvider);
     }
 
 }

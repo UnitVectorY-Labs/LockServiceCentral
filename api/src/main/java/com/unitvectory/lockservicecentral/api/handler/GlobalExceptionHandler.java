@@ -13,6 +13,7 @@
  */
 package com.unitvectory.lockservicecentral.api.handler;
 
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +28,7 @@ import com.unitvectory.jsonschema4springboot.ValidateJsonSchemaException;
 import com.unitvectory.jsonschema4springboot.ValidateJsonSchemaFailedResponse;
 import com.unitvectory.lockservicecentral.api.dto.InternalErrorResponse;
 import com.unitvectory.lockservicecentral.api.dto.ValidationErrorResponse;
+import com.unitvectory.lockservicecentral.logging.CanonicalLogContext;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -42,27 +44,34 @@ public class GlobalExceptionHandler {
     @Autowired
     private UuidGenerator uuidGenerator;
 
+    @Autowired
+    private ObjectProvider<CanonicalLogContext> canonicalLogContextProvider;
+
     @ExceptionHandler(ValidateJsonSchemaException.class)
     public ResponseEntity<ValidateJsonSchemaFailedResponse> onValidateJsonSchemaException(
             ValidateJsonSchemaException ex) {
+        enrichCanonicalContextForValidationError();
         return ResponseEntity.badRequest().body(new ValidateJsonSchemaFailedResponse(ex));
     }
 
     @ExceptionHandler(HandlerMethodValidationException.class)
     public ResponseEntity<ValidationErrorResponse> onHandlerMethodValidationException(
             HandlerMethodValidationException ex) {
+        enrichCanonicalContextForValidationError();
         return ResponseEntity.badRequest().body(new ValidationErrorResponse(ex));
     }
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<InternalErrorResponse> onHttpRequestMethodNotSupportedException(
             HttpRequestMethodNotSupportedException ex) {
+        // Don't log stack trace for client errors like 405
         return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)
                 .body(new InternalErrorResponse(this.uuidGenerator.generateUuid(), "Method not allowed"));
     }
 
     @ExceptionHandler(NoResourceFoundException.class)
     public ResponseEntity<InternalErrorResponse> onNoResourceFoundException(NoResourceFoundException ex) {
+        // Don't log stack trace for client errors like 404
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(new InternalErrorResponse(this.uuidGenerator.generateUuid(), "Resource not found"));
     }
@@ -72,9 +81,41 @@ public class GlobalExceptionHandler {
         // This will generate a unique error ID for each error
         InternalErrorResponse response = new InternalErrorResponse(this.uuidGenerator.generateUuid());
 
+        // Enrich canonical context with exception details
+        enrichCanonicalContextForException(ex, response.getErrorId());
+
         // Logging the error ID and the exception so they can be correlated
         log.error(response.getErrorId(), ex);
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+    }
+
+    /**
+     * Enriches the canonical log context for validation errors.
+     * Only sets error_type, no stack trace for client validation errors.
+     */
+    private void enrichCanonicalContextForValidationError() {
+        try {
+            CanonicalLogContext context = canonicalLogContextProvider.getObject();
+            context.put("error_type", "validation_error");
+        } catch (Exception e) {
+            // Don't break error handling if logging fails
+        }
+    }
+
+    /**
+     * Enriches the canonical log context for unhandled exceptions.
+     * 
+     * @param ex the exception
+     * @param errorId the error ID for correlation
+     */
+    private void enrichCanonicalContextForException(Exception ex, String errorId) {
+        try {
+            CanonicalLogContext context = canonicalLogContextProvider.getObject();
+            context.put("error_id", errorId);
+            context.put("exception", CanonicalLogContext.exceptionToStackTrace(ex));
+        } catch (Exception e) {
+            // Don't break error handling if logging fails
+        }
     }
 }

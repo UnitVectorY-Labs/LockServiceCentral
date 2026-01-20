@@ -13,6 +13,7 @@
  */
 package com.unitvectory.lockservicecentral.api.controller;
 
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +28,8 @@ import com.unitvectory.jsonschema4springboot.ValidateJsonSchema;
 import com.unitvectory.jsonschema4springboot.ValidateJsonSchemaVersion;
 import com.unitvectory.lockservicecentral.api.service.LockManagerService;
 import com.unitvectory.lockservicecentral.locker.Lock;
+import com.unitvectory.lockservicecentral.logging.CanonicalLogContext;
+import com.unitvectory.lockservicecentral.logging.HashUtil;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
@@ -44,6 +47,9 @@ public class LockController {
     @Autowired
     private LockManagerService lockManagerService;
 
+    @Autowired
+    private ObjectProvider<CanonicalLogContext> canonicalLogContextProvider;
+
     /**
      * Gets the status of a lock.
      * 
@@ -59,6 +65,8 @@ public class LockController {
     public ResponseEntity<Lock> getLock(
             @Valid @PathVariable @Pattern(regexp = "^[a-zA-Z0-9_-]+$", message = "Namespace must be alphanumeric with dashes and underscores only") @Size(min = 3, max = 64, message = "Namespace must be between 3 and 64 characters long") String namespace,
             @Valid @PathVariable @Pattern(regexp = "^[a-zA-Z0-9_-]+$", message = "Lock name must be alphanumeric with dashes and underscores only") @Size(min = 3, max = 64, message = "Lock name must be between 3 and 64 characters long") String lockName) {
+
+        enrichCanonicalContext(namespace, lockName, "get", null, null, null);
 
         Lock lock = lockManagerService.getLock(namespace, lockName);
 
@@ -82,6 +90,7 @@ public class LockController {
             @AuthenticationPrincipal Jwt jwt) {
 
         this.setLockAttributes(lock, namespace, lockName, jwt);
+        enrichCanonicalContext(namespace, lockName, "acquire", jwt, lock.getInstanceId(), lock.getLeaseDuration());
 
         Lock acquiredLock = lockManagerService.acquireLock(lock);
 
@@ -106,6 +115,7 @@ public class LockController {
             @AuthenticationPrincipal Jwt jwt) {
 
         this.setLockAttributes(lock, namespace, lockName, jwt);
+        enrichCanonicalContext(namespace, lockName, "renew", jwt, lock.getInstanceId(), lock.getLeaseDuration());
 
         Lock renewedLock = lockManagerService.renewLock(lock);
 
@@ -130,6 +140,7 @@ public class LockController {
             @AuthenticationPrincipal Jwt jwt) {
 
         this.setLockAttributes(lock, namespace, lockName, jwt);
+        enrichCanonicalContext(namespace, lockName, "release", jwt, lock.getInstanceId(), null);
 
         Lock releasedLock = lockManagerService.releaseLock(lock);
 
@@ -152,6 +163,41 @@ public class LockController {
             lock.setOwner("anonymous");
         } else {
             lock.setOwner(jwt.getSubject());
+        }
+    }
+
+    /**
+     * Enriches the canonical log context with lock operation details.
+     * 
+     * @param namespace the lock namespace
+     * @param lockName the lock name
+     * @param operation the lock operation
+     * @param jwt the JWT (may be null)
+     * @param instanceId the instance ID (may be null)
+     * @param leaseDuration the requested lease duration (may be null)
+     */
+    private void enrichCanonicalContext(String namespace, String lockName, String operation, Jwt jwt, String instanceId, Long leaseDuration) {
+        CanonicalLogContext context = canonicalLogContextProvider.getObject();
+        
+        context.put("lock_namespace", namespace);
+        context.put("lock_name", lockName);
+        context.put("lock_operation", operation);
+        
+        // Auth subject
+        if (jwt == null) {
+            context.put("auth_subject", "anonymous");
+        } else {
+            context.put("auth_subject", jwt.getSubject());
+        }
+        
+        // Instance ID hash (never log raw instance_id)
+        if (instanceId != null) {
+            context.put("instance_id_hash", HashUtil.sha256Hex(instanceId));
+        }
+        
+        // Requested lease duration for POST operations
+        if (leaseDuration != null) {
+            context.put("requested_lease_duration_sec", leaseDuration);
         }
     }
 }

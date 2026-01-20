@@ -13,13 +13,16 @@
  */
 package com.unitvectory.lockservicecentral.api.service;
 
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.unitvectory.consistgen.epoch.EpochTimeProvider;
 import com.unitvectory.lockservicecentral.locker.Lock;
 import com.unitvectory.lockservicecentral.locker.LockAction;
 import com.unitvectory.lockservicecentral.locker.LockService;
+import com.unitvectory.lockservicecentral.logging.CanonicalLogContext;
 
 import lombok.NonNull;
 
@@ -37,6 +40,12 @@ public class LockManagerService {
     @Autowired
     private EpochTimeProvider epochTimeProvider;
 
+    @Autowired
+    private ObjectProvider<CanonicalLogContext> canonicalLogContextProvider;
+
+    @Value("${lock.backend:memory}")
+    private String lockBackend;
+
     /**
      * Get a lock.
      * 
@@ -50,7 +59,9 @@ public class LockManagerService {
         lock.setLockName(lockName);
         lock.setAction(LockAction.GET);
 
+        long startTime = System.currentTimeMillis();
         Lock activeLock = lockService.getLock(namespace, lockName);
+        long endTime = System.currentTimeMillis();
 
         if (activeLock != null) {
             lock = activeLock;
@@ -60,6 +71,9 @@ public class LockManagerService {
 
         // Clear out the owner and instance ID
         lock.setGet(now);
+
+        // Enrich canonical context
+        enrichCanonicalContext(endTime - startTime, activeLock != null ? "success" : "not_found", null);
 
         return lock;
     }
@@ -78,7 +92,17 @@ public class LockManagerService {
         long expiry = now + lock.getLeaseDuration();
         lock.setExpiry(expiry);
 
-        return lockService.acquireLock(lock, now);
+        long startTime = System.currentTimeMillis();
+        Lock result = lockService.acquireLock(lock, now);
+        long endTime = System.currentTimeMillis();
+
+        // Determine lock result
+        String lockResult = Boolean.TRUE.equals(result.getSuccess()) ? "success" : "conflict";
+        
+        // Enrich canonical context
+        enrichCanonicalContext(endTime - startTime, lockResult, result.getSuccess() ? expiry : null);
+
+        return result;
     }
 
     /**
@@ -93,7 +117,18 @@ public class LockManagerService {
         // The current time is used to renew the lock
         long now = this.epochTimeProvider.epochTimeSeconds();
 
-        return lockService.renewLock(lock, now);
+        long startTime = System.currentTimeMillis();
+        Lock result = lockService.renewLock(lock, now);
+        long endTime = System.currentTimeMillis();
+
+        // Determine lock result
+        String lockResult = Boolean.TRUE.equals(result.getSuccess()) ? "success" : "conflict";
+        
+        // Enrich canonical context with new expiry
+        Long computedExpiry = Boolean.TRUE.equals(result.getSuccess()) ? result.getExpiry() : null;
+        enrichCanonicalContext(endTime - startTime, lockResult, computedExpiry);
+
+        return result;
     }
 
     /**
@@ -108,6 +143,35 @@ public class LockManagerService {
         // The current time is used to release the lock
         long now = this.epochTimeProvider.epochTimeSeconds();
 
-        return lockService.releaseLock(lock, now);
+        long startTime = System.currentTimeMillis();
+        Lock result = lockService.releaseLock(lock, now);
+        long endTime = System.currentTimeMillis();
+
+        // Determine lock result
+        String lockResult = Boolean.TRUE.equals(result.getSuccess()) ? "success" : "conflict";
+        
+        // Enrich canonical context
+        enrichCanonicalContext(endTime - startTime, lockResult, null);
+
+        return result;
+    }
+
+    /**
+     * Enriches the canonical log context with service-level details.
+     * 
+     * @param backendDurationMs time spent in backend call
+     * @param lockResult the lock operation result
+     * @param computedExpiry the computed expiry (for acquire/renew)
+     */
+    private void enrichCanonicalContext(long backendDurationMs, String lockResult, Long computedExpiry) {
+        CanonicalLogContext context = canonicalLogContextProvider.getObject();
+        
+        context.put("lock_backend", lockBackend);
+        context.put("backend_duration_ms", backendDurationMs);
+        context.put("lock_result", lockResult);
+        
+        if (computedExpiry != null) {
+            context.put("computed_expiry_epoch_sec", computedExpiry);
+        }
     }
 }
