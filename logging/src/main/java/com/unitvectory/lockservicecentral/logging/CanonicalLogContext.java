@@ -25,7 +25,6 @@ import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.web.context.annotation.RequestScope;
 
 /**
  * Request-scoped context for building a canonical log record.
@@ -36,9 +35,11 @@ import org.springframework.web.context.annotation.RequestScope;
  * 
  * <p>Thread-safe for limited intra-request parallelism when explicitly propagated.</p>
  * 
+ * <p>Note: This class is configured as request-scoped with a scoped proxy in
+ * {@link CanonicalLoggingConfig}.</p>
+ * 
  * @author Jared Hatfield (UnitVectorY Labs)
  */
-@RequestScope
 public class CanonicalLogContext {
 
     private static final Logger log = LoggerFactory.getLogger(CanonicalLogContext.class);

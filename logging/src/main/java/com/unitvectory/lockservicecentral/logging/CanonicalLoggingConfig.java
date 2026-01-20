@@ -16,7 +16,9 @@ package com.unitvectory.lockservicecentral.logging;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.context.annotation.RequestScope;
+import org.springframework.context.annotation.Scope;
+import org.springframework.context.annotation.ScopedProxyMode;
+import org.springframework.web.context.WebApplicationContext;
 
 /**
  * Spring configuration for canonical logging components.
@@ -28,12 +30,15 @@ import org.springframework.web.context.annotation.RequestScope;
 public class CanonicalLoggingConfig {
 
     /**
-     * Creates a request-scoped canonical log context.
+     * Creates a request-scoped canonical log context with a scoped proxy.
+     * 
+     * <p>The scoped proxy ensures that singleton beans (like filters and interceptors)
+     * can safely inject this request-scoped bean without causing scope issues.</p>
      * 
      * @return a new context for each request
      */
     @Bean
-    @RequestScope
+    @Scope(value = WebApplicationContext.SCOPE_REQUEST, proxyMode = ScopedProxyMode.TARGET_CLASS)
     public CanonicalLogContext canonicalLogContext() {
         return new CanonicalLogContext();
     }
