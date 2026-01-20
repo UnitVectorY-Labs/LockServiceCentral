@@ -21,6 +21,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
+import org.springframework.web.context.request.RequestAttributes;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import jakarta.servlet.FilterChain;
@@ -68,7 +71,14 @@ public class CanonicalInitFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-        
+        // Ensure request scope is bound before accessing the request-scoped context
+        RequestAttributes existingAttributes = RequestContextHolder.getRequestAttributes();
+        boolean boundHere = false;
+        if (existingAttributes == null) {
+            RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request, response));
+            boundHere = true;
+        }
+
         CanonicalLogContext context = contextProvider.getObject();
         
         // Set baseline fields known at request start
@@ -102,7 +112,13 @@ public class CanonicalInitFilter extends OncePerRequestFilter {
             context.put("client_ip", clientIp);
         }
         
-        filterChain.doFilter(request, response);
+        try {
+            filterChain.doFilter(request, response);
+        } finally {
+            if (boundHere) {
+                RequestContextHolder.resetRequestAttributes();
+            }
+        }
     }
 
     /**
