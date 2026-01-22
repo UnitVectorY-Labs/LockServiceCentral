@@ -20,12 +20,14 @@ import java.security.NoSuchAlgorithmException;
 /**
  * Utility class for hashing sensitive values before logging.
  * 
- * <p>This is useful when you need to log an identifier for correlation purposes
- * but the raw value should not be exposed in logs (e.g., instance IDs, tokens).</p>
+ * <p>
+ * This is useful when you need to log an identifier for correlation purposes
+ * but the raw value should not be exposed in logs (e.g., instance IDs, tokens).
+ * </p>
  * 
  * @author Jared Hatfield (UnitVectorY Labs)
  */
-public final class HashUtil {
+final class HashUtil {
 
     private HashUtil() {
         // Utility class
@@ -37,7 +39,7 @@ public final class HashUtil {
      * @param input the input string
      * @return the hex digest, or "hash_error" if hashing fails
      */
-    public static String sha256Hex(String input) {
+    static String sha256Hex(String input) {
         if (input == null) {
             return null;
         }

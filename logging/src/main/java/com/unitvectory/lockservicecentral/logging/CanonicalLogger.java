@@ -20,13 +20,15 @@ import org.springframework.stereotype.Component;
 /**
  * Dedicated logger for canonical log records.
  * 
- * <p>Wraps a SLF4J logger named "canonical" to keep the intent clear and ensure
- * canonical records are routed to a dedicated appender.</p>
+ * <p>
+ * Wraps a SLF4J logger named "canonical" to keep the intent clear and ensure
+ * canonical records are routed to a dedicated appender.
+ * </p>
  * 
  * @author Jared Hatfield (UnitVectorY Labs)
  */
 @Component
-public class CanonicalLogger {
+class CanonicalLogger {
 
     private static final Logger logger = LoggerFactory.getLogger("canonical");
 
@@ -35,7 +37,7 @@ public class CanonicalLogger {
      * 
      * @param jsonLine the JSON log line
      */
-    public void info(String jsonLine) {
+    void info(String jsonLine) {
         logger.info(jsonLine);
     }
 
@@ -44,7 +46,7 @@ public class CanonicalLogger {
      * 
      * @param message the warning message
      */
-    public void warn(String message) {
+    void warn(String message) {
         logger.warn(message);
     }
 
@@ -52,9 +54,9 @@ public class CanonicalLogger {
      * Logs an error message.
      * 
      * @param message the error message
-     * @param ex the exception
+     * @param ex      the exception
      */
-    public void error(String message, Throwable ex) {
+    void error(String message, Throwable ex) {
         logger.error(message, ex);
     }
 }

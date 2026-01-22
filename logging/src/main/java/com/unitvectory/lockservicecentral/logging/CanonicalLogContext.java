@@ -26,17 +26,27 @@ import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import lombok.Getter;
+
 /**
  * Request-scoped context for building a canonical log record.
  * 
- * <p>Each HTTP request gets an isolated instance. Controllers and services can add fields
- * during request processing using {@link #put(String, Object)}. The final record is emitted
- * exactly once at request completion.</p>
+ * <p>
+ * Each HTTP request gets an isolated instance. Controllers and services can add
+ * fields
+ * during request processing using {@link #put(String, Object)}. The final
+ * record is emitted
+ * exactly once at request completion.
+ * </p>
  * 
- * <p>Thread-safe for limited intra-request parallelism when explicitly propagated.</p>
+ * <p>
+ * Thread-safe for limited intra-request parallelism when explicitly propagated.
+ * </p>
  * 
- * <p>Note: This class is configured as request-scoped with a scoped proxy in
- * {@link CanonicalLoggingConfig}.</p>
+ * <p>
+ * Note: This class is configured as request-scoped with a scoped proxy in
+ * {@link CanonicalLoggingConfig}.
+ * </p>
  * 
  * @author Jared Hatfield (UnitVectorY Labs)
  */
@@ -60,13 +70,15 @@ public class CanonicalLogContext {
     private static final int MAX_USER_AGENT_LENGTH = 200;
 
     /**
-     * The underlying map storing log fields. Using synchronized wrapper for thread safety.
+     * The underlying map storing log fields. Using synchronized wrapper for thread
+     * safety.
      */
     private final Map<String, Object> fields = Collections.synchronizedMap(new LinkedHashMap<>());
 
     /**
      * Request start timestamp, captured at construction.
      */
+    @Getter
     private final Instant startInstant;
 
     /**
@@ -82,21 +94,16 @@ public class CanonicalLogContext {
     }
 
     /**
-     * Returns the request start timestamp.
-     * 
-     * @return the start instant
-     */
-    public Instant getStartInstant() {
-        return startInstant;
-    }
-
-    /**
      * Adds a field to the canonical record.
      * 
-     * <p>Silently ignores null values. Validates that the key is snake_case and the value
-     * is a supported type. Invalid keys or values are logged as warnings but do not throw.</p>
+     * <p>
+     * Silently ignores null values. Validates that the key is snake_case and the
+     * value
+     * is a supported type. Invalid keys or values are logged as warnings but do not
+     * throw.
+     * </p>
      * 
-     * @param key the field name (must be snake_case)
+     * @param key   the field name (must be snake_case)
      * @param value the field value (must be a supported type)
      */
     public void put(String key, Object value) {
@@ -119,9 +126,31 @@ public class CanonicalLogContext {
     }
 
     /**
+     * Adds a file to the canonical record with the value set being the SHA-256 hash
+     * of
+     * the input. This avoids logging the exact value while still allowing
+     * correlation.
+     * 
+     * @param key   the field name (must be snake_case)
+     * @param value the field value to hash
+     */
+    public void putSHA256(String key, String value) {
+        // Silently ignore null values
+        if (value == null) {
+            return;
+        }
+
+        // Hash the value using SHA-256
+        String hashedValue = HashUtil.sha256Hex(value);
+
+        // Put the value
+        this.put(key, hashedValue);
+    }
+
+    /**
      * Normalizes a value to a supported type for flat JSON serialization.
      * 
-     * @param key the field key (for logging)
+     * @param key   the field key (for logging)
      * @param value the value to normalize
      * @return the normalized value, or null if the type is not supported
      */
@@ -158,7 +187,8 @@ public class CanonicalLogContext {
     /**
      * Marks this record as emitted if it hasn't been already.
      * 
-     * @return true if this was the first call (emission should proceed), false otherwise
+     * @return true if this was the first call (emission should proceed), false
+     *         otherwise
      */
     public boolean markEmittedIfFirst() {
         return emitted.compareAndSet(false, true);
@@ -176,7 +206,7 @@ public class CanonicalLogContext {
     /**
      * Truncates a string value to the specified maximum length.
      * 
-     * @param value the value to truncate
+     * @param value     the value to truncate
      * @param maxLength the maximum length
      * @return the truncated value
      */
