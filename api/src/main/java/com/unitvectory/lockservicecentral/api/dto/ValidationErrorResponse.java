@@ -16,6 +16,7 @@ package com.unitvectory.lockservicecentral.api.dto;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.context.MessageSourceResolvable;
 import org.springframework.core.MethodParameter;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 
@@ -43,20 +44,38 @@ public class ValidationErrorResponse {
 
     /**
      * Create a new validation error response from a handler method validation
+     * 
      * @param ex the handler method validation exception
      */
     public ValidationErrorResponse(HandlerMethodValidationException ex) {
         this.message = "Validation failed";
         this.details = new ArrayList<>();
 
-        ex.getAllValidationResults().forEach(validationResult -> {
-            MethodParameter methodParameter = validationResult.getMethodParameter();
+        // Per-parameter validation results (6.2+)
+        ex.getParameterValidationResults().forEach(paramResult -> {
+            MethodParameter methodParameter = paramResult.getMethodParameter();
             String parameterName = methodParameter.getParameterName();
-            validationResult.getResolvableErrors().forEach(error -> {
+
+            // Add container element context if applicable (List index, Map key, etc.)
+            String where = parameterName;
+            if (paramResult.getContainerIndex() != null) {
+                where = where + "[" + paramResult.getContainerIndex() + "]";
+            } else if (paramResult.getContainerKey() != null) {
+                where = where + "[" + paramResult.getContainerKey() + "]";
+            }
+
+            for (MessageSourceResolvable error : paramResult.getResolvableErrors()) {
                 String validationMessage = error.getDefaultMessage();
-                this.details
-                        .add(String.format("Parameter '%s' failed validation: %s", parameterName, validationMessage));
-            });
+                this.details.add(
+                        String.format("Parameter '%s' failed validation: %s", where, validationMessage));
+            }
+        });
+
+        // Cross-parameter constraints (method-level, not tied to a single parameter)
+        ex.getCrossParameterValidationResults().forEach(error -> {
+            String validationMessage = error.getDefaultMessage();
+            this.details.add(
+                    String.format("Cross-parameter validation failed: %s", validationMessage));
         });
     }
 }
