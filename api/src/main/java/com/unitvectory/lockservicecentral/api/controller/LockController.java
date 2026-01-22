@@ -29,7 +29,6 @@ import com.unitvectory.jsonschema4springboot.ValidateJsonSchemaVersion;
 import com.unitvectory.lockservicecentral.api.service.LockManagerService;
 import com.unitvectory.lockservicecentral.locker.Lock;
 import com.unitvectory.lockservicecentral.logging.CanonicalLogContext;
-import com.unitvectory.lockservicecentral.logging.HashUtil;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
@@ -169,32 +168,33 @@ public class LockController {
     /**
      * Enriches the canonical log context with lock operation details.
      * 
-     * @param namespace the lock namespace
-     * @param lockName the lock name
-     * @param operation the lock operation
-     * @param jwt the JWT (may be null)
-     * @param instanceId the instance ID (may be null)
+     * @param namespace     the lock namespace
+     * @param lockName      the lock name
+     * @param operation     the lock operation
+     * @param jwt           the JWT (may be null)
+     * @param instanceId    the instance ID (may be null)
      * @param leaseDuration the requested lease duration (may be null)
      */
-    private void enrichCanonicalContext(String namespace, String lockName, String operation, Jwt jwt, String instanceId, Long leaseDuration) {
+    private void enrichCanonicalContext(String namespace, String lockName, String operation, Jwt jwt, String instanceId,
+            Long leaseDuration) {
         CanonicalLogContext context = canonicalLogContextProvider.getObject();
-        
+
         context.put("lock_namespace", namespace);
         context.put("lock_name", lockName);
         context.put("lock_operation", operation);
-        
+
         // Auth subject
         if (jwt == null) {
             context.put("auth_subject", "anonymous");
         } else {
             context.put("auth_subject", jwt.getSubject());
         }
-        
+
         // Instance ID hash (never log raw instance_id)
         if (instanceId != null) {
-            context.put("instance_id_hash", HashUtil.sha256Hex(instanceId));
+            context.putSHA256("instance_id_hash", instanceId);
         }
-        
+
         // Requested lease duration for POST operations
         if (leaseDuration != null) {
             context.put("requested_lease_duration_sec", leaseDuration);

@@ -32,8 +32,10 @@ import jakarta.servlet.http.HttpServletResponse;
 /**
  * Interceptor that finalizes and emits the canonical log record exactly once.
  * 
- * <p>In preHandle, captures the route template. In afterCompletion, computes final
- * baseline fields and emits the record.</p>
+ * <p>
+ * In preHandle, captures the route template. In afterCompletion, computes final
+ * baseline fields and emits the record.
+ * </p>
  * 
  * @author Jared Hatfield (UnitVectorY Labs)
  */
@@ -49,7 +51,7 @@ public class CanonicalEmitInterceptor implements HandlerInterceptor {
      * 
      * @param contextProvider provides the request-scoped context
      * @param canonicalLogger the canonical logger
-     * @param objectMapper the Jackson object mapper
+     * @param objectMapper    the Jackson object mapper
      */
     public CanonicalEmitInterceptor(
             ObjectProvider<CanonicalLogContext> contextProvider,
@@ -64,7 +66,7 @@ public class CanonicalEmitInterceptor implements HandlerInterceptor {
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
         try {
             CanonicalLogContext context = contextProvider.getObject();
-            
+
             // Capture route template when available
             Object routePattern = request.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
             if (routePattern != null) {
@@ -77,38 +79,39 @@ public class CanonicalEmitInterceptor implements HandlerInterceptor {
     }
 
     @Override
-    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) {
+    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler,
+            Exception ex) {
         try {
             CanonicalLogContext context = contextProvider.getObject();
-            
+
             // Ensure exactly-once emission
             if (!context.markEmittedIfFirst()) {
                 return;
             }
-            
+
             // Compute final baseline fields
             Instant endTime = Instant.now();
             context.put("ts", endTime);
-            
+
             long durationMs = Duration.between(context.getStartInstant(), endTime).toMillis();
             context.put("duration_ms", durationMs);
-            
+
             int statusCode = response.getStatus();
             context.put("http_status_code", statusCode);
-            
+
             // Determine outcome
             String outcome = determineOutcome(statusCode, ex);
             context.put("outcome", outcome);
-            
+
             // Only add exception stack traces for server errors (5xx status codes)
             // Don't log stack traces for client errors like 404, 400, etc.
             if (ex != null && statusCode >= 500) {
                 context.put("exception", CanonicalLogContext.exceptionToStackTrace(ex));
             }
-            
+
             // Emit the canonical record
             emitRecord(context);
-            
+
         } catch (Exception e) {
             // Emit fallback record on failure
             emitFallbackRecord(e);
@@ -119,7 +122,7 @@ public class CanonicalEmitInterceptor implements HandlerInterceptor {
      * Determines the outcome based on status code and exception.
      * 
      * @param statusCode the HTTP status code
-     * @param ex the exception, if any
+     * @param ex         the exception, if any
      * @return the outcome string
      */
     private String determineOutcome(int statusCode, Exception ex) {
@@ -168,7 +171,7 @@ public class CanonicalEmitInterceptor implements HandlerInterceptor {
             fallback.put("outcome", "failure");
             fallback.put("error_type", "canonical_log_emit_failure");
             fallback.put("error_message", CanonicalLogContext.truncateErrorMessage(cause.getMessage()));
-            
+
             String jsonLine = objectMapper.writeValueAsString(fallback);
             canonicalLogger.info(jsonLine);
         } catch (Exception e) {

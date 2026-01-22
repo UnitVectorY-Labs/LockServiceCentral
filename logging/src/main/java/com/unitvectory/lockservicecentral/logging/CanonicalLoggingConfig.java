@@ -32,8 +32,10 @@ public class CanonicalLoggingConfig {
     /**
      * Creates a request-scoped canonical log context with a scoped proxy.
      * 
-     * <p>The scoped proxy ensures that singleton beans (like filters and interceptors)
-     * can safely inject this request-scoped bean without causing scope issues.</p>
+     * <p>
+     * The scoped proxy ensures that singleton beans (like filters and interceptors)
+     * can safely inject this request-scoped bean without causing scope issues.
+     * </p>
      * 
      * @return a new context for each request
      */

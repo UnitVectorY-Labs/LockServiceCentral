@@ -14,10 +14,11 @@
 package com.unitvectory.lockservicecentral.logging;
 
 import java.io.IOException;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.info.BuildProperties;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
@@ -34,8 +35,11 @@ import jakarta.servlet.http.HttpServletResponse;
 /**
  * Servlet filter that initializes baseline fields in the canonical log context.
  * 
- * <p>This filter runs early in the request lifecycle to capture request-start fields
- * such as timestamps, request ID, HTTP method, and target path.</p>
+ * <p>
+ * This filter runs early in the request lifecycle to capture request-start
+ * fields
+ * such as timestamps, request ID, HTTP method, and target path.
+ * </p>
  * 
  * @author Jared Hatfield (UnitVectorY Labs)
  */
@@ -47,25 +51,26 @@ public class CanonicalInitFilter extends OncePerRequestFilter {
     private static final String X_FORWARDED_FOR_HEADER = "X-Forwarded-For";
     private static final String USER_AGENT_HEADER = "User-Agent";
     private static final String REQUEST_ID_PREFIX = "req_";
+    private final String SERVICE_NAME = "lockservicecentral";
 
     private final ObjectProvider<CanonicalLogContext> contextProvider;
     private final AppRuntimeProperties appRuntimeProperties;
-    private final String serviceName;
+    private final Optional<BuildProperties> buildProperties;
 
     /**
      * Constructs a new filter.
      * 
-     * @param contextProvider provides the request-scoped context
+     * @param contextProvider      provides the request-scoped context
      * @param appRuntimeProperties application runtime properties
-     * @param serviceName the service name from spring.application.name
+     * @param buildProperties      optional build properties
      */
     public CanonicalInitFilter(
             ObjectProvider<CanonicalLogContext> contextProvider,
             AppRuntimeProperties appRuntimeProperties,
-            @Value("${spring.application.name:unknown_service}") String serviceName) {
+            Optional<BuildProperties> buildProperties) {
         this.contextProvider = contextProvider;
         this.appRuntimeProperties = appRuntimeProperties;
-        this.serviceName = serviceName;
+        this.buildProperties = buildProperties;
     }
 
     @Override
@@ -80,38 +85,38 @@ public class CanonicalInitFilter extends OncePerRequestFilter {
         }
 
         CanonicalLogContext context = contextProvider.getObject();
-        
+
         // Set baseline fields known at request start
         context.put("ts_start", context.getStartInstant());
-        context.put("service", serviceName);
+        context.put("service", SERVICE_NAME);
         context.put("env", appRuntimeProperties.getEnv());
         context.put("region", appRuntimeProperties.getRegion());
-        context.put("version", appRuntimeProperties.getVersion());
+        context.put("version", resolveVersion());
         context.put("kind", "http");
-        
+
         // Generate or adopt request ID
         String requestId = request.getHeader(X_REQUEST_ID_HEADER);
         if (requestId == null || requestId.isBlank()) {
             requestId = REQUEST_ID_PREFIX + UUID.randomUUID().toString();
         }
         context.put("request_id", requestId);
-        
+
         // HTTP request details
         context.put("http_method", request.getMethod());
         context.put("http_target", request.getRequestURI());
-        
+
         // Optional baseline fields
         String userAgent = request.getHeader(USER_AGENT_HEADER);
         if (userAgent != null && !userAgent.isBlank()) {
             context.put("http_user_agent", CanonicalLogContext.truncateUserAgent(userAgent));
         }
-        
+
         // Client IP resolution
         String clientIp = resolveClientIp(request);
         if (clientIp != null && !clientIp.isBlank()) {
             context.put("client_ip", clientIp);
         }
-        
+
         try {
             filterChain.doFilter(request, response);
         } finally {
@@ -137,5 +142,13 @@ public class CanonicalInitFilter extends OncePerRequestFilter {
             }
         }
         return request.getRemoteAddr();
+    }
+
+    private String resolveVersion() {
+        String v = appRuntimeProperties.getVersion();
+        if (v != null && !v.isBlank()) {
+            return v;
+        }
+        return buildProperties.map(BuildProperties::getVersion).orElse(null);
     }
 }

@@ -18,7 +18,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import lombok.Data;
 
 /**
- * Configuration properties for application runtime attributes used in canonical logging.
+ * Configuration properties for application runtime attributes used in canonical
+ * logging.
  * 
  * @author Jared Hatfield (UnitVectorY Labs)
  */
