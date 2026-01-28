@@ -115,20 +115,37 @@ Lock items are stored with the following attributes:
 
 ### Atomicity
 
-All lock operations use DynamoDB's conditional write operations to ensure atomic compare-and-swap semantics. This guarantees that concurrent lock operations are handled correctly.
+All lock operations use DynamoDB's conditional write operations to ensure fully atomic lock semantics. Each operation performs all condition checks and the mutation in a single atomic DynamoDB call, eliminating race conditions that would occur with read-then-write patterns.
+
+**Key atomicity guarantees:**
+
+- **No read-before-write**: All operations use conditional expressions that handle all edge cases atomically within DynamoDB, rather than reading state first and then writing based on application logic.
+- **Expiry checks in conditions**: Lock expiration is evaluated within DynamoDB's condition expressions using the current timestamp, ensuring no time-of-check to time-of-use (TOCTOU) vulnerabilities.
+- **Single-operation mutations**: Acquire, renew, and release each complete in a single DynamoDB API call.
 
 ### Lock Expiry
 
 Lock expiry is handled in two ways:
 
-1. **Application-level**: The application checks the `expiry` field during operations
+1. **Condition-level**: Expiry is checked atomically within DynamoDB condition expressions during lock operations
 2. **DynamoDB TTL**: If configured, DynamoDB automatically deletes expired items based on the `expiry` field
 
 ### Behavior
 
-- **Acquire**: Uses conditional `PutItem` with `attribute_not_exists` for new locks, or checks expiry for existing locks
-- **Renew**: Extends `leaseDuration` and `expiry` by adding the requested lease duration to the existing values, using conditional writes to ensure the lock hasn't changed
-- **Release**: Deletes the lock item using conditional `DeleteItem` after verifying ownership
+- **Acquire**: Uses a single conditional `PutItem` operation with a compound condition:
+  - Lock doesn't exist (`attribute_not_exists`), OR
+  - Lock is expired (`expiry < :now`), OR
+  - Lock belongs to the same owner/instance (`owner = :owner AND instanceId = :instanceId`)
+  
+- **Renew**: Uses a single conditional `UpdateItem` operation that:
+  - Validates the lock exists, is not expired, and matches owner/instance
+  - Atomically adds the requested duration to both `leaseDuration` and `expiry`
+  - Returns the updated values
+  
+- **Release**: Uses a single conditional `DeleteItem` operation that:
+  - Validates ownership (`owner` and `instanceId` must match)
+  - Allows releasing expired locks owned by the same owner
+  - Treats non-existent locks as already released (idempotent)
 
 ## Example Configuration
 
