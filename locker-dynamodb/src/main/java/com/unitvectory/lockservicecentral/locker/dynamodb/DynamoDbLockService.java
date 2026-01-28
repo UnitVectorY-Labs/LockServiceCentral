@@ -154,7 +154,6 @@ public class DynamoDbLockService implements LockService {
     @Override
     public Lock acquireLock(@NonNull Lock originalLock, long now) {
         Lock lock = originalLock.copy();
-        String key = generateKey(lock.getNamespace(), lock.getLockName());
 
         try {
             // First, try to get the existing lock
@@ -228,7 +227,6 @@ public class DynamoDbLockService implements LockService {
     @Override
     public Lock renewLock(@NonNull Lock originalLock, long now) {
         Lock lock = originalLock.copy();
-        String key = generateKey(lock.getNamespace(), lock.getLockName());
 
         try {
             // Get the current lock

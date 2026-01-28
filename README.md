@@ -69,7 +69,3 @@ docker build --build-arg LOCKER=etcd -t lockservicecentral-etcd .
 # DynamoDB backend
 docker build --build-arg LOCKER=dynamodb -t lockservicecentral-dynamodb .
 ```
-
-# etcd backend
-docker build --build-arg LOCKER=etcd -t lockservicecentral-etcd .
-```
