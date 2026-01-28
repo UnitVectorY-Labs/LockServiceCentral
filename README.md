@@ -29,6 +29,7 @@ The API documentation is available via Swagger UI at the root of the running ser
 | Memory | `locker-memory` | In-memory lock storage for single-instance deployments and testing |
 | Firestore | `locker-firestore` | Google Cloud Firestore for distributed deployments on GCP |
 | etcd | `locker-etcd` | etcd for distributed deployments using Kubernetes or other etcd-based infrastructure |
+| DynamoDB | `locker-dynamodb` | AWS DynamoDB for distributed deployments on AWS |
 
 ## Building
 
@@ -44,6 +45,9 @@ mvn clean package -P firestore
 # etcd backend
 mvn clean package -P etcd
 
+# DynamoDB backend
+mvn clean package -P dynamodb
+
 # Build all backends for testing
 mvn clean package -P everything
 ```
@@ -58,6 +62,13 @@ docker build -t lockservicecentral-memory .
 
 # Firestore backend
 docker build --build-arg LOCKER=firestore -t lockservicecentral-firestore .
+
+# etcd backend
+docker build --build-arg LOCKER=etcd -t lockservicecentral-etcd .
+
+# DynamoDB backend
+docker build --build-arg LOCKER=dynamodb -t lockservicecentral-dynamodb .
+```
 
 # etcd backend
 docker build --build-arg LOCKER=etcd -t lockservicecentral-etcd .

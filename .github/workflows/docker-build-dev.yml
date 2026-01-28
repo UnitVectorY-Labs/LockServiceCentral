@@ -23,6 +23,8 @@ jobs:
             tag: firestore
           - profile: etcd
             tag: etcd
+          - profile: dynamodb
+            tag: dynamodb
 
     steps:
     - name: Checkout code
