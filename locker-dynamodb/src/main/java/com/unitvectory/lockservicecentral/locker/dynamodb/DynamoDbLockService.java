@@ -175,24 +175,6 @@ public class DynamoDbLockService implements LockService {
         }
     }
 
-    /**
-     * Acquires a lock atomically using a single DynamoDB PutItem operation.
-     * 
-     * <p>The condition expression handles all edge cases atomically:</p>
-     * <ul>
-     *   <li>Lock doesn't exist: attribute_not_exists(lockId)</li>
-     *   <li>Lock is expired: expiry &lt; :now</li>
-     *   <li>Lock belongs to same owner/instance: owner = :owner AND instanceId = :instanceId</li>
-     * </ul>
-     * 
-     * <p>This eliminates race conditions by performing all checks and the write in a single
-     * atomic operation. No read-before-write pattern is used.</p>
-     * 
-     * @param originalLock the lock request containing namespace, lockName, owner, instanceId,
-     *                     leaseDuration, and expiry
-     * @param now the current timestamp in epoch seconds
-     * @return the lock with success/failure status set
-     */
     @Override
     public Lock acquireLock(@NonNull Lock originalLock, long now) {
         Lock lock = originalLock.copy();
@@ -241,26 +223,6 @@ public class DynamoDbLockService implements LockService {
         return lock;
     }
 
-    /**
-     * Renews a lock atomically using a single DynamoDB UpdateItem operation.
-     * 
-     * <p>The condition expression ensures all requirements are met atomically:</p>
-     * <ul>
-     *   <li>Lock must exist: attribute_exists(lockId) (explicit condition)</li>
-     *   <li>Lock must not be expired: expiry &gt;= :now</li>
-     *   <li>Lock must match owner: owner = :owner</li>
-     *   <li>Lock must match instanceId: instanceId = :instanceId</li>
-     * </ul>
-     * 
-     * <p>The update atomically adds the requested leaseDuration to both the existing
-     * leaseDuration and expiry values. This eliminates race conditions by performing
-     * condition checks and updates in a single atomic operation.</p>
-     * 
-     * @param originalLock the lock request containing namespace, lockName, owner, instanceId,
-     *                     and leaseDuration to add
-     * @param now the current timestamp in epoch seconds
-     * @return the lock with updated leaseDuration/expiry and success/failure status set
-     */
     @Override
     public Lock renewLock(@NonNull Lock originalLock, long now) {
         Lock lock = originalLock.copy();
@@ -328,26 +290,6 @@ public class DynamoDbLockService implements LockService {
         return lock;
     }
 
-    /**
-     * Releases a lock atomically using a single DynamoDB DeleteItem operation.
-     * 
-     * <p>The condition expression ensures ownership before deletion:</p>
-     * <ul>
-     *   <li>Lock must match owner: owner = :owner</li>
-     *   <li>Lock must match instanceId: instanceId = :instanceId</li>
-     * </ul>
-     * 
-     * <p>Note: Expired locks owned by the same owner/instance can still be released.
-     * If the lock doesn't exist, this is treated as success (already released).
-     * If the lock exists but belongs to a different owner, the operation fails.</p>
-     * 
-     * <p>When the condition fails, we use ReturnValuesOnConditionCheckFailure to get the
-     * existing item's attributes atomically, avoiding a separate read operation.</p>
-     * 
-     * @param originalLock the lock request containing namespace, lockName, owner, and instanceId
-     * @param now the current timestamp in epoch seconds (used to check if expired lock belongs to another)
-     * @return the lock with cleared values and success/failure status set
-     */
     @Override
     public Lock releaseLock(@NonNull Lock originalLock, long now) {
         Lock lock = originalLock.copy();

@@ -19,6 +19,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.json.JsonCompareMode;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
@@ -37,7 +38,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import java.io.File;
 
 /**
- * The paramaterized tests for the Spring Boot API
+ * The parameterized tests for the Spring Boot API
  * 
  * @author Jared Hatfield (UnitVectorY Labs)
  */
@@ -85,7 +86,7 @@ public class APILockServiceTest {
                 // Run the GET request
                 mockMvc.perform(MockMvcRequestBuilders.get(path))
                         .andExpect(MockMvcResultMatchers.status().is(status))
-                        .andExpect(MockMvcResultMatchers.content().json(response, true));
+                        .andExpect(MockMvcResultMatchers.content().json(response, JsonCompareMode.STRICT));
             } else if (verb.equals("POST")) {
                 assertTrue(node.has("request"), "Missing request");
                 String request = node.get("request").toString();
@@ -101,7 +102,7 @@ public class APILockServiceTest {
                         .contentType("application/json")
                         .content(request))
                         .andExpect(MockMvcResultMatchers.status().is(status))
-                        .andExpect(MockMvcResultMatchers.content().json(response, true));
+                        .andExpect(MockMvcResultMatchers.content().json(response, JsonCompareMode.STRICT));
             } else {
                 fail("Unknown verb: " + verb);
             }
