@@ -32,9 +32,33 @@ import software.amazon.awssdk.services.dynamodb.model.DynamoDbException;
 import software.amazon.awssdk.services.dynamodb.model.GetItemRequest;
 import software.amazon.awssdk.services.dynamodb.model.GetItemResponse;
 import software.amazon.awssdk.services.dynamodb.model.PutItemRequest;
+import software.amazon.awssdk.services.dynamodb.model.ReturnValue;
+import software.amazon.awssdk.services.dynamodb.model.ReturnValuesOnConditionCheckFailure;
+import software.amazon.awssdk.services.dynamodb.model.UpdateItemRequest;
+import software.amazon.awssdk.services.dynamodb.model.UpdateItemResponse;
 
 /**
- * The DynamoDB LockService.
+ * DynamoDB implementation of {@link LockService} providing distributed lock functionality.
+ * 
+ * <p>This implementation uses DynamoDB's conditional write operations to ensure atomic
+ * lock operations across distributed instances. All lock mutations (acquire, renew, release)
+ * are performed using single atomic operations with comprehensive condition expressions,
+ * eliminating race conditions that would occur with read-then-write patterns.</p>
+ * 
+ * <h2>Atomicity Guarantees</h2>
+ * <ul>
+ *   <li><b>Acquire</b>: Single PutItem with condition that succeeds only if the lock doesn't
+ *       exist, is expired, or belongs to the same owner/instance</li>
+ *   <li><b>Renew</b>: Single UpdateItem with condition that succeeds only if the lock exists,
+ *       is not expired, and matches the owner/instance</li>
+ *   <li><b>Release</b>: Single DeleteItem with condition that succeeds only if the lock
+ *       matches the owner/instance (expired locks are also deletable)</li>
+ * </ul>
+ * 
+ * <h2>Lock Expiry Handling</h2>
+ * <p>Lock expiry is checked atomically within DynamoDB condition expressions using the
+ * current timestamp passed to each operation. This ensures that expiry checks cannot
+ * be affected by clock skew between read and write operations.</p>
  * 
  * @author Jared Hatfield (UnitVectorY Labs)
  */
@@ -151,66 +175,60 @@ public class DynamoDbLockService implements LockService {
         }
     }
 
+    /**
+     * Acquires a lock atomically using a single DynamoDB PutItem operation.
+     * 
+     * <p>The condition expression handles all edge cases atomically:</p>
+     * <ul>
+     *   <li>Lock doesn't exist: attribute_not_exists(lockId)</li>
+     *   <li>Lock is expired: expiry &lt; :now</li>
+     *   <li>Lock belongs to same owner/instance: owner = :owner AND instanceId = :instanceId</li>
+     * </ul>
+     * 
+     * <p>This eliminates race conditions by performing all checks and the write in a single
+     * atomic operation. No read-before-write pattern is used.</p>
+     * 
+     * @param originalLock the lock request containing namespace, lockName, owner, instanceId,
+     *                     leaseDuration, and expiry
+     * @param now the current timestamp in epoch seconds
+     * @return the lock with success/failure status set
+     */
     @Override
     public Lock acquireLock(@NonNull Lock originalLock, long now) {
         Lock lock = originalLock.copy();
 
         try {
-            // First, try to get the existing lock
-            Lock existingLock = getLock(lock.getNamespace(), lock.getLockName());
+            Map<String, AttributeValue> item = lockToItem(lock);
 
-            if (existingLock == null) {
-                // No existing lock - use conditional put to ensure it doesn't exist
-                Map<String, AttributeValue> item = lockToItem(lock);
+            // Atomic condition: lock doesn't exist OR lock is expired OR same owner/instance
+            // This handles all acquire scenarios in a single atomic operation
+            String conditionExpression = 
+                "attribute_not_exists(lockId) OR " +
+                "expiry < :now OR " +
+                "(#owner = :owner AND instanceId = :instanceId)";
 
-                PutItemRequest putRequest = PutItemRequest.builder()
-                        .tableName(tableName)
-                        .item(item)
-                        .conditionExpression("attribute_not_exists(lockId)")
-                        .build();
+            Map<String, AttributeValue> expressionValues = new HashMap<>();
+            expressionValues.put(":now", AttributeValue.builder().n(String.valueOf(now)).build());
+            expressionValues.put(":owner", AttributeValue.builder().s(lock.getOwner()).build());
+            expressionValues.put(":instanceId", AttributeValue.builder().s(lock.getInstanceId()).build());
 
-                dynamoDbClient.putItem(putRequest);
-                lock.setSuccess();
-                recordOutcome("ACQUIRED");
+            Map<String, String> expressionNames = new HashMap<>();
+            expressionNames.put("#owner", "owner");
 
-            } else if (lock.isMatch(existingLock)) {
-                // Lock is already acquired by the same owner, it can be updated with the new expiry
-                Map<String, AttributeValue> item = lockToItem(lock);
+            PutItemRequest putRequest = PutItemRequest.builder()
+                    .tableName(tableName)
+                    .item(item)
+                    .conditionExpression(conditionExpression)
+                    .expressionAttributeValues(expressionValues)
+                    .expressionAttributeNames(expressionNames)
+                    .build();
 
-                PutItemRequest putRequest = PutItemRequest.builder()
-                        .tableName(tableName)
-                        .item(item)
-                        .build();
-
-                dynamoDbClient.putItem(putRequest);
-                lock.setSuccess();
-                recordOutcome("LOCK_REPLACED");
-
-            } else if (!existingLock.isExpired(now)) {
-                // Lock is still valid, return conflict
-                lock.setFailed();
-                recordOutcome("ACQUIRE_CONFLICT");
-
-            } else {
-                // Lock is expired, so we can acquire it
-                // Use conditional put to ensure the lock hasn't changed since we read it
-                Map<String, AttributeValue> item = lockToItem(lock);
-
-                PutItemRequest putRequest = PutItemRequest.builder()
-                        .tableName(tableName)
-                        .item(item)
-                        .conditionExpression("expiry = :oldExpiry")
-                        .expressionAttributeValues(Map.of(
-                                ":oldExpiry", AttributeValue.builder().n(String.valueOf(existingLock.getExpiry())).build()))
-                        .build();
-
-                dynamoDbClient.putItem(putRequest);
-                lock.setSuccess();
-                recordOutcome("ACQUIRED");
-            }
+            dynamoDbClient.putItem(putRequest);
+            lock.setSuccess();
+            recordOutcome("ACQUIRED");
 
         } catch (ConditionalCheckFailedException e) {
-            // Conditional check failed - someone else modified the lock
+            // Condition failed: lock exists, is not expired, and belongs to different owner
             log.debug("Conditional check failed for acquire lock: {}", lock, e);
             lock.setFailed();
             recordOutcome("ACQUIRE_CONFLICT");
@@ -224,55 +242,81 @@ public class DynamoDbLockService implements LockService {
         return lock;
     }
 
+    /**
+     * Renews a lock atomically using a single DynamoDB UpdateItem operation.
+     * 
+     * <p>The condition expression ensures all requirements are met atomically:</p>
+     * <ul>
+     *   <li>Lock must exist: attribute_exists(lockId) (explicit condition)</li>
+     *   <li>Lock must not be expired: expiry &gt;= :now</li>
+     *   <li>Lock must match owner: owner = :owner</li>
+     *   <li>Lock must match instanceId: instanceId = :instanceId</li>
+     * </ul>
+     * 
+     * <p>The update atomically adds the requested leaseDuration to both the existing
+     * leaseDuration and expiry values. This eliminates race conditions by performing
+     * condition checks and updates in a single atomic operation.</p>
+     * 
+     * @param originalLock the lock request containing namespace, lockName, owner, instanceId,
+     *                     and leaseDuration to add
+     * @param now the current timestamp in epoch seconds
+     * @return the lock with updated leaseDuration/expiry and success/failure status set
+     */
     @Override
     public Lock renewLock(@NonNull Lock originalLock, long now) {
         Lock lock = originalLock.copy();
+        String key = generateKey(lock.getNamespace(), lock.getLockName());
 
         try {
-            // Get the current lock
-            Lock existingLock = getLock(lock.getNamespace(), lock.getLockName());
+            // Atomic condition: lock exists, is not expired, and matches owner/instance
+            // Note: attribute_exists is required because UpdateItem would otherwise create the item
+            String conditionExpression = 
+                "attribute_exists(lockId) AND " +
+                "expiry >= :now AND " +
+                "#owner = :owner AND " +
+                "instanceId = :instanceId";
 
-            if (existingLock == null) {
-                // Lock doesn't exist, so it cannot be renewed
-                lock.setFailed();
-                recordOutcome("RENEW_NOT_FOUND");
+            // Update expression: add leaseDuration to both leaseDuration and expiry
+            String updateExpression = 
+                "SET leaseDuration = leaseDuration + :addDuration, " +
+                "expiry = expiry + :addDuration";
 
-            } else if (!lock.isMatch(existingLock)) {
-                // Lock doesn't match, so it cannot be renewed
-                lock.setFailed();
-                recordOutcome("RENEW_MISMATCH");
+            Map<String, AttributeValue> expressionValues = new HashMap<>();
+            expressionValues.put(":now", AttributeValue.builder().n(String.valueOf(now)).build());
+            expressionValues.put(":owner", AttributeValue.builder().s(lock.getOwner()).build());
+            expressionValues.put(":instanceId", AttributeValue.builder().s(lock.getInstanceId()).build());
+            expressionValues.put(":addDuration", AttributeValue.builder().n(String.valueOf(lock.getLeaseDuration())).build());
 
-            } else if (existingLock.isExpired(now)) {
-                // Lock is expired, so it cannot be renewed
-                lock.setFailed();
-                recordOutcome("RENEW_EXPIRED");
+            Map<String, String> expressionNames = new HashMap<>();
+            expressionNames.put("#owner", "owner");
 
-            } else {
-                // Successfully renew the lock
-                long newLeaseDuration = existingLock.getLeaseDuration() + lock.getLeaseDuration();
-                long newExpiry = existingLock.getExpiry() + lock.getLeaseDuration();
-                lock.setLeaseDuration(newLeaseDuration);
-                lock.setExpiry(newExpiry);
+            UpdateItemRequest updateRequest = UpdateItemRequest.builder()
+                    .tableName(tableName)
+                    .key(Map.of("lockId", AttributeValue.builder().s(key).build()))
+                    .conditionExpression(conditionExpression)
+                    .updateExpression(updateExpression)
+                    .expressionAttributeValues(expressionValues)
+                    .expressionAttributeNames(expressionNames)
+                    .returnValues(ReturnValue.ALL_NEW)
+                    .build();
 
-                Map<String, AttributeValue> item = lockToItem(lock);
-
-                // Use conditional put to ensure the lock hasn't changed since we read it
-                PutItemRequest putRequest = PutItemRequest.builder()
-                        .tableName(tableName)
-                        .item(item)
-                        .conditionExpression("expiry = :oldExpiry AND owner = :owner AND instanceId = :instanceId")
-                        .expressionAttributeValues(Map.of(
-                                ":oldExpiry", AttributeValue.builder().n(String.valueOf(existingLock.getExpiry())).build(),
-                                ":owner", AttributeValue.builder().s(existingLock.getOwner()).build(),
-                                ":instanceId", AttributeValue.builder().s(existingLock.getInstanceId()).build()))
-                        .build();
-
-                dynamoDbClient.putItem(putRequest);
-                lock.setSuccess();
-                recordOutcome("RENEWED");
+            UpdateItemResponse response = dynamoDbClient.updateItem(updateRequest);
+            
+            // Extract the updated values from the response
+            Map<String, AttributeValue> attrs = response.attributes();
+            if (attrs != null && !attrs.isEmpty()) {
+                Lock updatedLock = itemToLock(attrs);
+                if (updatedLock != null) {
+                    lock.setLeaseDuration(updatedLock.getLeaseDuration());
+                    lock.setExpiry(updatedLock.getExpiry());
+                }
             }
+            
+            lock.setSuccess();
+            recordOutcome("RENEWED");
 
         } catch (ConditionalCheckFailedException e) {
+            // Condition failed: lock doesn't exist, is expired, or belongs to different owner
             log.debug("Conditional check failed for renew lock: {}", lock, e);
             lock.setFailed();
             recordOutcome("RENEW_CONFLICT");
@@ -286,52 +330,80 @@ public class DynamoDbLockService implements LockService {
         return lock;
     }
 
+    /**
+     * Releases a lock atomically using a single DynamoDB DeleteItem operation.
+     * 
+     * <p>The condition expression ensures ownership before deletion:</p>
+     * <ul>
+     *   <li>Lock must match owner: owner = :owner</li>
+     *   <li>Lock must match instanceId: instanceId = :instanceId</li>
+     * </ul>
+     * 
+     * <p>Note: Expired locks owned by the same owner/instance can still be released.
+     * If the lock doesn't exist, this is treated as success (already released).
+     * If the lock exists but belongs to a different owner, the operation fails.</p>
+     * 
+     * <p>When the condition fails, we use ReturnValuesOnConditionCheckFailure to get the
+     * existing item's attributes atomically, avoiding a separate read operation.</p>
+     * 
+     * @param originalLock the lock request containing namespace, lockName, owner, and instanceId
+     * @param now the current timestamp in epoch seconds (used to check if expired lock belongs to another)
+     * @return the lock with cleared values and success/failure status set
+     */
     @Override
     public Lock releaseLock(@NonNull Lock originalLock, long now) {
         Lock lock = originalLock.copy();
         String key = generateKey(lock.getNamespace(), lock.getLockName());
 
         try {
-            // Get the current lock
-            Lock existingLock = getLock(lock.getNamespace(), lock.getLockName());
+            // Atomic condition: lock must match owner and instanceId
+            // We allow releasing expired locks that we own
+            String conditionExpression = 
+                "#owner = :owner AND instanceId = :instanceId";
 
-            if (existingLock == null) {
-                // Lock doesn't exist, so it is already released
-                lock.setCleared();
-                recordOutcome("RELEASED_NOT_FOUND");
+            Map<String, AttributeValue> expressionValues = new HashMap<>();
+            expressionValues.put(":owner", AttributeValue.builder().s(lock.getOwner()).build());
+            expressionValues.put(":instanceId", AttributeValue.builder().s(lock.getInstanceId()).build());
 
-            } else if (existingLock.isExpired(now)) {
-                // Lock is expired, so it is already released
-                lock.setCleared();
-                recordOutcome("RELEASED_EXPIRED");
+            Map<String, String> expressionNames = new HashMap<>();
+            expressionNames.put("#owner", "owner");
 
-            } else if (!lock.isMatch(existingLock)) {
-                // Lock doesn't match, so it cannot be released
-                lock.setFailed();
-                recordOutcome("RELEASE_CONFLICT");
+            DeleteItemRequest deleteRequest = DeleteItemRequest.builder()
+                    .tableName(tableName)
+                    .key(Map.of("lockId", AttributeValue.builder().s(key).build()))
+                    .conditionExpression(conditionExpression)
+                    .expressionAttributeValues(expressionValues)
+                    .expressionAttributeNames(expressionNames)
+                    .returnValuesOnConditionCheckFailure(ReturnValuesOnConditionCheckFailure.ALL_OLD)
+                    .build();
 
-            } else {
-                // Successfully release the lock by deleting the item
-                // Use conditional delete to ensure the lock hasn't changed since we read it
-                DeleteItemRequest deleteRequest = DeleteItemRequest.builder()
-                        .tableName(tableName)
-                        .key(Map.of("lockId", AttributeValue.builder().s(key).build()))
-                        .conditionExpression("expiry = :oldExpiry AND owner = :owner AND instanceId = :instanceId")
-                        .expressionAttributeValues(Map.of(
-                                ":oldExpiry", AttributeValue.builder().n(String.valueOf(existingLock.getExpiry())).build(),
-                                ":owner", AttributeValue.builder().s(existingLock.getOwner()).build(),
-                                ":instanceId", AttributeValue.builder().s(existingLock.getInstanceId()).build()))
-                        .build();
-
-                dynamoDbClient.deleteItem(deleteRequest);
-                lock.setCleared();
-                recordOutcome("RELEASED");
-            }
+            dynamoDbClient.deleteItem(deleteRequest);
+            lock.setCleared();
+            recordOutcome("RELEASED");
 
         } catch (ConditionalCheckFailedException e) {
-            log.debug("Conditional check failed for release lock: {}", lock, e);
-            lock.setFailed();
-            recordOutcome("RELEASE_CONFLICT");
+            // Condition failed: could mean lock doesn't exist or belongs to different owner
+            // Check the item from the exception to determine which case
+            Map<String, AttributeValue> item = e.item();
+            
+            if (item == null || item.isEmpty()) {
+                // Lock doesn't exist - treat as success (already released)
+                lock.setCleared();
+                recordOutcome("RELEASED_NOT_FOUND");
+            } else {
+                // Lock exists but belongs to different owner
+                Lock existingLock = itemToLock(item);
+                if (existingLock != null && existingLock.isExpired(now)) {
+                    // Lock is expired, treat as effectively released
+                    lock.setCleared();
+                    recordOutcome("RELEASED_EXPIRED");
+                } else {
+                    // Lock exists and belongs to different owner, and is not expired
+                    log.debug("Conditional check failed for release lock: {}", lock, e);
+                    lock.setFailed();
+                    recordOutcome("RELEASE_CONFLICT");
+                }
+            }
 
         } catch (DynamoDbException e) {
             log.error("Error releasing lock: {}", lock, e);
