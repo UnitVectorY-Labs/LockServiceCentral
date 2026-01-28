@@ -21,7 +21,7 @@ import com.unitvectory.consistgen.uuid.StaticUuidGenerator;
 import com.unitvectory.consistgen.uuid.UuidGenerator;
 
 /**
- * The Static UUUID Generator Configuration
+ * The Static UUID Generator Configuration
  * 
  * @author Jared Hatfield (UnitVectorY Labs)
  */
