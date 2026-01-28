@@ -121,6 +121,17 @@
                 </dependency>
             </dependencies>
         </profile>
+        <profile>
+            <id>dynamodb</id>
+            <dependencies>
+                <dependency>
+                    <groupId>com.unitvectory.lockservicecentral</groupId>
+                    <artifactId>locker-dynamodb</artifactId>
+                    <version>${project.version}</version>
+                    <scope>runtime</scope>
+                </dependency>
+            </dependencies>
+        </profile>
     </profiles>
 
     <build>
