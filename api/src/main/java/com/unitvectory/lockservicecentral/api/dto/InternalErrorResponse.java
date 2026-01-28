@@ -17,7 +17,7 @@ import lombok.Getter;
 
 /**
  * The internal error response
- * 
+ *
  * @author Jared Hatfield (UnitVectorY Labs)
  */
 @Getter
@@ -35,7 +35,7 @@ public class InternalErrorResponse {
 
     /**
      * Create a new internal error response
-     * 
+     *
      * @param errorId the error ID
      */
     public InternalErrorResponse(String errorId) {
@@ -45,7 +45,7 @@ public class InternalErrorResponse {
 
     /**
      * Create a new internal error response
-     * 
+     *
      * @param errorId the error ID
      * @param message the message
      */

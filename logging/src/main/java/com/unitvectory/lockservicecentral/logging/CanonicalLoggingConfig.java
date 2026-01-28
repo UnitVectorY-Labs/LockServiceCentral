@@ -22,7 +22,7 @@ import org.springframework.web.context.WebApplicationContext;
 
 /**
  * Spring configuration for canonical logging components.
- * 
+ *
  * @author Jared Hatfield (UnitVectorY Labs)
  */
 @Configuration
@@ -31,12 +31,12 @@ public class CanonicalLoggingConfig {
 
     /**
      * Creates a request-scoped canonical log context with a scoped proxy.
-     * 
+     *
      * <p>
      * The scoped proxy ensures that singleton beans (like filters and interceptors)
      * can safely inject this request-scoped bean without causing scope issues.
      * </p>
-     * 
+     *
      * @return a new context for each request
      */
     @Bean

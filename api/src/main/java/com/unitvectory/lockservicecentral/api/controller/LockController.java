@@ -37,7 +37,7 @@ import lombok.NonNull;
 
 /**
  * The Lock Controller
- * 
+ *
  * @author Jared Hatfield (UnitVectorY Labs)
  */
 @RestController
@@ -51,11 +51,11 @@ public class LockController {
 
     /**
      * Gets the status of a lock.
-     * 
+     *
      * The status of the lock is always returned, even if the lock does not exist as
      * that is just an available lock. The locks that are unavailable are the ones
      * that include the `owner` and `expiry` fields.
-     * 
+     *
      * @param namespace the lock namespace
      * @param lockName  the lock name
      * @return the lock status
@@ -74,7 +74,7 @@ public class LockController {
 
     /**
      * Acquire a lock.
-     * 
+     *
      * @param namespace the lock namespace
      * @param lockName  the lock name
      * @param lock      the lock request
@@ -99,7 +99,7 @@ public class LockController {
 
     /**
      * Renew a lock.
-     * 
+     *
      * @param namespace the lock namespace
      * @param lockName  the lock name
      * @param lock      the lock request
@@ -124,7 +124,7 @@ public class LockController {
 
     /**
      * Release a lock.
-     * 
+     *
      * @param namespace the lock namespace
      * @param lockName  the lock name
      * @param lock      the lock request
@@ -149,7 +149,7 @@ public class LockController {
 
     /**
      * Sets the lock attributes.
-     * 
+     *
      * @param lock      the lock
      * @param namespace the namespace
      * @param lockName  the lock name
@@ -167,7 +167,7 @@ public class LockController {
 
     /**
      * Enriches the canonical log context with lock operation details.
-     * 
+     *
      * @param namespace     the lock namespace
      * @param lockName      the lock name
      * @param operation     the lock operation

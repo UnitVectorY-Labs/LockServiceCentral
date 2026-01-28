@@ -24,7 +24,7 @@ import io.etcd.jetcd.Client;
 
 /**
  * The EtcdLockService test with actual etcd server.
- * 
+ *
  * @author Jared Hatfield (UnitVectorY Labs)
  */
 @Disabled

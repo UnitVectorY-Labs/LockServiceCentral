@@ -28,7 +28,7 @@ import lombok.NonNull;
 
 /**
  * The Lock Service
- * 
+ *
  * @author Jared Hatfield (UnitVectorY Labs)
  */
 @Service
@@ -48,7 +48,7 @@ public class LockManagerService {
 
     /**
      * Get a lock.
-     * 
+     *
      * @param namespace the namespace
      * @param lockName  the lock name
      * @return the lock
@@ -80,7 +80,7 @@ public class LockManagerService {
 
     /**
      * Acquire a lock.
-     * 
+     *
      * @param lock the lock request
      * @return the lock response
      */
@@ -98,7 +98,7 @@ public class LockManagerService {
 
         // Determine lock result
         String lockResult = Boolean.TRUE.equals(result.getSuccess()) ? "success" : "conflict";
-        
+
         // Enrich canonical context
         enrichCanonicalContext(endTime - startTime, lockResult, result.getSuccess() ? expiry : null);
 
@@ -107,7 +107,7 @@ public class LockManagerService {
 
     /**
      * Renew a lock.
-     * 
+     *
      * @param lock the lock request
      * @return the lock response
      */
@@ -123,7 +123,7 @@ public class LockManagerService {
 
         // Determine lock result
         String lockResult = Boolean.TRUE.equals(result.getSuccess()) ? "success" : "conflict";
-        
+
         // Enrich canonical context with new expiry
         Long computedExpiry = Boolean.TRUE.equals(result.getSuccess()) ? result.getExpiry() : null;
         enrichCanonicalContext(endTime - startTime, lockResult, computedExpiry);
@@ -133,7 +133,7 @@ public class LockManagerService {
 
     /**
      * Release a lock.
-     * 
+     *
      * @param lock the lock request
      * @return the lock response
      */
@@ -149,7 +149,7 @@ public class LockManagerService {
 
         // Determine lock result
         String lockResult = Boolean.TRUE.equals(result.getSuccess()) ? "success" : "conflict";
-        
+
         // Enrich canonical context
         enrichCanonicalContext(endTime - startTime, lockResult, null);
 
@@ -158,18 +158,18 @@ public class LockManagerService {
 
     /**
      * Enriches the canonical log context with service-level details.
-     * 
+     *
      * @param backendDurationMs time spent in backend call
      * @param lockResult the lock operation result
      * @param computedExpiry the computed expiry (for acquire/renew)
      */
     private void enrichCanonicalContext(long backendDurationMs, String lockResult, Long computedExpiry) {
         CanonicalLogContext context = canonicalLogContextProvider.getObject();
-        
+
         context.put("lock_backend", lockBackend);
         context.put("backend_duration_ms", backendDurationMs);
         context.put("lock_result", lockResult);
-        
+
         if (computedExpiry != null) {
             context.put("computed_expiry_epoch_sec", computedExpiry);
         }

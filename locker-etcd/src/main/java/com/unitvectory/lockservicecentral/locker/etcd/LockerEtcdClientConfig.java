@@ -28,7 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * The Configuration for the etcd Client.
- * 
+ *
  * @author Jared Hatfield (UnitVectorY Labs)
  */
 @Configuration
@@ -56,6 +56,11 @@ public class LockerEtcdClientConfig {
 	@Value("${locker.etcd.auth.password:#{null}}")
 	private String password;
 
+	/**
+	 * Creates the etcd Client bean.
+	 *
+	 * @return the etcd Client instance
+	 */
 	@Bean
 	public Client etcdClient() {
 		String[] endpointArray = endpoints.split(",");

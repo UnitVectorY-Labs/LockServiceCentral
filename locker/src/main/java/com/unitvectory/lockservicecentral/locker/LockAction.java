@@ -15,7 +15,7 @@ package com.unitvectory.lockservicecentral.locker;
 
 /**
  * The lock action.
- * 
+ *
  * @author Jared Hatfield (UnitVectorY Labs)
  */
 public enum LockAction {

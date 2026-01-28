@@ -30,7 +30,7 @@ import lombok.Getter;
 
 /**
  * Request-scoped context for building a canonical log record.
- * 
+ *
  * <p>
  * Each HTTP request gets an isolated instance. Controllers and services can add
  * fields
@@ -38,16 +38,16 @@ import lombok.Getter;
  * record is emitted
  * exactly once at request completion.
  * </p>
- * 
+ *
  * <p>
  * Thread-safe for limited intra-request parallelism when explicitly propagated.
  * </p>
- * 
+ *
  * <p>
  * Note: This class is configured as request-scoped with a scoped proxy in
  * {@link CanonicalLoggingConfig}.
  * </p>
- * 
+ *
  * @author Jared Hatfield (UnitVectorY Labs)
  */
 public class CanonicalLogContext {
@@ -95,14 +95,14 @@ public class CanonicalLogContext {
 
     /**
      * Adds a field to the canonical record.
-     * 
+     *
      * <p>
      * Silently ignores null values. Validates that the key is snake_case and the
      * value
      * is a supported type. Invalid keys or values are logged as warnings but do not
      * throw.
      * </p>
-     * 
+     *
      * @param key   the field name (must be snake_case)
      * @param value the field value (must be a supported type)
      */
@@ -130,7 +130,7 @@ public class CanonicalLogContext {
      * of
      * the input. This avoids logging the exact value while still allowing
      * correlation.
-     * 
+     *
      * @param key   the field name (must be snake_case)
      * @param value the field value to hash
      */
@@ -149,7 +149,7 @@ public class CanonicalLogContext {
 
     /**
      * Normalizes a value to a supported type for flat JSON serialization.
-     * 
+     *
      * @param key   the field key (for logging)
      * @param value the value to normalize
      * @return the normalized value, or null if the type is not supported
@@ -175,7 +175,7 @@ public class CanonicalLogContext {
 
     /**
      * Returns a defensive copy of the current fields.
-     * 
+     *
      * @return a snapshot of the fields
      */
     public Map<String, Object> snapshot() {
@@ -186,7 +186,7 @@ public class CanonicalLogContext {
 
     /**
      * Marks this record as emitted if it hasn't been already.
-     * 
+     *
      * @return true if this was the first call (emission should proceed), false
      *         otherwise
      */
@@ -196,7 +196,7 @@ public class CanonicalLogContext {
 
     /**
      * Returns whether the record has been emitted.
-     * 
+     *
      * @return true if already emitted
      */
     public boolean isEmitted() {
@@ -205,7 +205,7 @@ public class CanonicalLogContext {
 
     /**
      * Truncates a string value to the specified maximum length.
-     * 
+     *
      * @param value     the value to truncate
      * @param maxLength the maximum length
      * @return the truncated value
@@ -222,7 +222,7 @@ public class CanonicalLogContext {
 
     /**
      * Truncates an error message to the standard maximum length.
-     * 
+     *
      * @param message the message to truncate
      * @return the truncated message
      */
@@ -232,7 +232,7 @@ public class CanonicalLogContext {
 
     /**
      * Truncates a user agent string to the standard maximum length.
-     * 
+     *
      * @param userAgent the user agent to truncate
      * @return the truncated user agent
      */
@@ -242,7 +242,7 @@ public class CanonicalLogContext {
 
     /**
      * Converts an exception to a stack trace string.
-     * 
+     *
      * @param ex the exception
      * @return the stack trace as a string
      */

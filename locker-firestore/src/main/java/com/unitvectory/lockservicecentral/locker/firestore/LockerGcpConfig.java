@@ -25,7 +25,7 @@ import com.unitvectory.lockservicecentral.logging.CanonicalLogContext;
 
 /**
  * The Configuration for the Firestore LockService.
- * 
+ *
  * @author Jared Hatfield (UnitVectorY Labs)
  */
 @Configuration
@@ -37,6 +37,12 @@ public class LockerGcpConfig {
 	@Value("${locker.firestore.collection:locks}")
 	private String collectionLocks;
 
+	/**
+	 * Creates the LockService bean.
+	 *
+	 * @param canonicalLogContextProvider the canonical log context provider
+	 * @return the LockService instance
+	 */
 	@Bean
 	public LockService lockService(ObjectProvider<CanonicalLogContext> canonicalLogContextProvider) {
 		return new FirestoreLockService(this.firestore, this.collectionLocks, canonicalLogContextProvider);

@@ -21,7 +21,7 @@ import java.util.Map;
 
 /**
  * The Lock test.
- * 
+ *
  * @author Jared Hatfield (UnitVectorY Labs)
  */
 class LockTest {

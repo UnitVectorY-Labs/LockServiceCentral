@@ -39,12 +39,12 @@ import software.amazon.awssdk.services.dynamodb.model.UpdateItemResponse;
 
 /**
  * DynamoDB implementation of {@link LockService} providing distributed lock functionality.
- * 
+ *
  * <p>This implementation uses DynamoDB's conditional write operations to ensure atomic
  * lock operations across distributed instances. All lock mutations (acquire, renew, release)
  * are performed using single atomic operations with comprehensive condition expressions,
  * eliminating race conditions that would occur with read-then-write patterns.</p>
- * 
+ *
  * <h2>Atomicity Guarantees</h2>
  * <ul>
  *   <li><b>Acquire</b>: Single PutItem with condition that succeeds only if the lock doesn't
@@ -54,12 +54,12 @@ import software.amazon.awssdk.services.dynamodb.model.UpdateItemResponse;
  *   <li><b>Release</b>: Single DeleteItem with condition that succeeds only if the lock
  *       matches the owner/instance (expired locks are also deletable)</li>
  * </ul>
- * 
+ *
  * <h2>Lock Expiry Handling</h2>
  * <p>Lock expiry is checked atomically within DynamoDB condition expressions using the
  * current timestamp passed to each operation. This ensures that expiry checks cannot
  * be affected by clock skew between read and write operations.</p>
- * 
+ *
  * @author Jared Hatfield (UnitVectorY Labs)
  */
 @Slf4j
@@ -71,7 +71,7 @@ public class DynamoDbLockService implements LockService {
 
     /**
      * Constructs a new DynamoDbLockService.
-     * 
+     *
      * @param dynamoDbClient the DynamoDB client
      * @param tableName the DynamoDB table name for locks
      * @param canonicalLogContextProvider provider for the canonical log context
@@ -85,7 +85,7 @@ public class DynamoDbLockService implements LockService {
 
     /**
      * Records the lock service outcome to the canonical log context.
-     * 
+     *
      * @param outcome the screaming snake case outcome
      */
     private void recordOutcome(String outcome) {
@@ -99,7 +99,7 @@ public class DynamoDbLockService implements LockService {
 
     /**
      * Generates the DynamoDB primary key for a lock based on namespace and lock name.
-     * 
+     *
      * @param namespace the namespace
      * @param lockName  the lock name
      * @return the primary key value
@@ -110,7 +110,7 @@ public class DynamoDbLockService implements LockService {
 
     /**
      * Converts a DynamoDB item to a Lock object.
-     * 
+     *
      * @param item the DynamoDB item
      * @return the Lock object, or null if item is empty
      */
@@ -132,14 +132,14 @@ public class DynamoDbLockService implements LockService {
 
     /**
      * Converts a Lock object to a DynamoDB item.
-     * 
+     *
      * @param lock the Lock object
      * @return the DynamoDB item
      */
     private Map<String, AttributeValue> lockToItem(Lock lock) {
         Map<String, AttributeValue> item = new HashMap<>();
         String key = generateKey(lock.getNamespace(), lock.getLockName());
-        
+
         item.put("lockId", AttributeValue.builder().s(key).build());
         item.put("namespace", AttributeValue.builder().s(lock.getNamespace()).build());
         item.put("lockName", AttributeValue.builder().s(lock.getLockName()).build());
@@ -184,7 +184,7 @@ public class DynamoDbLockService implements LockService {
 
             // Atomic condition: lock doesn't exist OR lock is expired OR same owner/instance
             // This handles all acquire scenarios in a single atomic operation
-            String conditionExpression = 
+            String conditionExpression =
                 "attribute_not_exists(lockId) OR " +
                 "expiry < :now OR " +
                 "(#owner = :owner AND instanceId = :instanceId)";
@@ -231,14 +231,14 @@ public class DynamoDbLockService implements LockService {
         try {
             // Atomic condition: lock exists, is not expired, and matches owner/instance
             // Note: attribute_exists is required because UpdateItem would otherwise create the item
-            String conditionExpression = 
+            String conditionExpression =
                 "attribute_exists(lockId) AND " +
                 "expiry >= :now AND " +
                 "#owner = :owner AND " +
                 "instanceId = :instanceId";
 
             // Update expression: add leaseDuration to both leaseDuration and expiry
-            String updateExpression = 
+            String updateExpression =
                 "SET leaseDuration = leaseDuration + :addDuration, " +
                 "expiry = expiry + :addDuration";
 
@@ -262,7 +262,7 @@ public class DynamoDbLockService implements LockService {
                     .build();
 
             UpdateItemResponse response = dynamoDbClient.updateItem(updateRequest);
-            
+
             // Extract the updated values from the response
             Map<String, AttributeValue> attrs = response.attributes();
             if (attrs != null && !attrs.isEmpty()) {
@@ -272,7 +272,7 @@ public class DynamoDbLockService implements LockService {
                     lock.setExpiry(updatedLock.getExpiry());
                 }
             }
-            
+
             lock.setSuccess();
             recordOutcome("RENEWED");
 
@@ -298,7 +298,7 @@ public class DynamoDbLockService implements LockService {
         try {
             // Atomic condition: lock must match owner and instanceId
             // We allow releasing expired locks that we own
-            String conditionExpression = 
+            String conditionExpression =
                 "#owner = :owner AND instanceId = :instanceId";
 
             Map<String, AttributeValue> expressionValues = new HashMap<>();
@@ -325,7 +325,7 @@ public class DynamoDbLockService implements LockService {
             // Condition failed: could mean lock doesn't exist or belongs to different owner
             // Check the item from the exception to determine which case
             Map<String, AttributeValue> item = e.item();
-            
+
             if (item == null || item.isEmpty()) {
                 // Lock doesn't exist - treat as success (already released)
                 lock.setCleared();

@@ -25,7 +25,7 @@ import lombok.Getter;
 
 /**
  * The validation error response
- * 
+ *
  * @author Jared Hatfield (UnitVectorY Labs)
  */
 @Getter
@@ -44,7 +44,7 @@ public class ValidationErrorResponse {
 
     /**
      * Create a new validation error response from a handler method validation
-     * 
+     *
      * @param ex the handler method validation exception
      */
     public ValidationErrorResponse(HandlerMethodValidationException ex) {

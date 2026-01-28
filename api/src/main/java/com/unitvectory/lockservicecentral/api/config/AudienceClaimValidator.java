@@ -24,7 +24,7 @@ import lombok.AllArgsConstructor;
 
 /**
  * Custom logic to validate the aud claim in the JWT
- * 
+ *
  * @author Jared Hatfield (UnitVectorY Labs)
  */
 @AllArgsConstructor

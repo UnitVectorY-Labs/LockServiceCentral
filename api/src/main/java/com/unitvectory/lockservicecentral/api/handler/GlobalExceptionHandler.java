@@ -34,7 +34,7 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * The global exception handler
- * 
+ *
  * @author Jared Hatfield (UnitVectorY Labs)
  */
 @ControllerAdvice
@@ -47,6 +47,12 @@ public class GlobalExceptionHandler {
     @Autowired
     private ObjectProvider<CanonicalLogContext> canonicalLogContextProvider;
 
+    /**
+     * Handles ValidateJsonSchemaException.
+     *
+     * @param ex the exception
+     * @return the error response
+     */
     @ExceptionHandler(ValidateJsonSchemaException.class)
     public ResponseEntity<ValidateJsonSchemaFailedResponse> onValidateJsonSchemaException(
             ValidateJsonSchemaException ex) {
@@ -54,6 +60,12 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(new ValidateJsonSchemaFailedResponse(ex));
     }
 
+    /**
+     * Handles HandlerMethodValidationException.
+     *
+     * @param ex the exception
+     * @return the error response
+     */
     @ExceptionHandler(HandlerMethodValidationException.class)
     public ResponseEntity<ValidationErrorResponse> onHandlerMethodValidationException(
             HandlerMethodValidationException ex) {
@@ -61,6 +73,12 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(new ValidationErrorResponse(ex));
     }
 
+    /**
+     * Handles HttpRequestMethodNotSupportedException.
+     *
+     * @param ex the exception
+     * @return the error response
+     */
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<InternalErrorResponse> onHttpRequestMethodNotSupportedException(
             HttpRequestMethodNotSupportedException ex) {
@@ -69,6 +87,12 @@ public class GlobalExceptionHandler {
                 .body(new InternalErrorResponse(this.uuidGenerator.generateUuid(), "Method not allowed"));
     }
 
+    /**
+     * Handles NoResourceFoundException.
+     *
+     * @param ex the exception
+     * @return the error response
+     */
     @ExceptionHandler(NoResourceFoundException.class)
     public ResponseEntity<InternalErrorResponse> onNoResourceFoundException(NoResourceFoundException ex) {
         // Don't log stack trace for client errors like 404
@@ -76,6 +100,12 @@ public class GlobalExceptionHandler {
                 .body(new InternalErrorResponse(this.uuidGenerator.generateUuid(), "Resource not found"));
     }
 
+    /**
+     * Handles all other exceptions.
+     *
+     * @param ex the exception
+     * @return the error response
+     */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<InternalErrorResponse> onException(Exception ex) {
         // This will generate a unique error ID for each error
@@ -105,7 +135,7 @@ public class GlobalExceptionHandler {
 
     /**
      * Enriches the canonical log context for unhandled exceptions.
-     * 
+     *
      * @param ex the exception
      * @param errorId the error ID for correlation
      */

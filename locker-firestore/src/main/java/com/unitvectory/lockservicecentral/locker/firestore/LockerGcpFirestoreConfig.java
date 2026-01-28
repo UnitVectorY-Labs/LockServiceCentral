@@ -22,7 +22,7 @@ import com.google.cloud.firestore.FirestoreOptions;
 
 /**
  * The Configuration for the Firestore LockService.
- * 
+ *
  * @author Jared Hatfield (UnitVectorY Labs)
  */
 @Configuration
@@ -34,6 +34,11 @@ public class LockerGcpFirestoreConfig {
 	@Value("${locker.firestore.database:(default)}")
 	private String firestoreDatabase;
 
+	/**
+	 * Creates the Firestore bean.
+	 *
+	 * @return the Firestore instance
+	 */
 	@Bean
 	public Firestore firestore() {
 		FirestoreOptions.Builder builder = FirestoreOptions.getDefaultInstance().toBuilder()

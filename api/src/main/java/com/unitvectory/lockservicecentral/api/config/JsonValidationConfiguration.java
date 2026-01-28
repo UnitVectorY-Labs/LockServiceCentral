@@ -21,7 +21,7 @@ import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 
 /**
  * The JSON validation configuration
- * 
+ *
  * @author Jared Hatfield (UnitVectorY Labs)
  */
 @Configuration

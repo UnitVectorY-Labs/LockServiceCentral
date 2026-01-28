@@ -19,12 +19,12 @@ import org.springframework.stereotype.Component;
 
 /**
  * Dedicated logger for canonical log records.
- * 
+ *
  * <p>
  * Wraps a SLF4J logger named "canonical" to keep the intent clear and ensure
  * canonical records are routed to a dedicated appender.
  * </p>
- * 
+ *
  * @author Jared Hatfield (UnitVectorY Labs)
  */
 @Component
@@ -34,7 +34,7 @@ class CanonicalLogger {
 
     /**
      * Logs a canonical JSON line at INFO level.
-     * 
+     *
      * @param jsonLine the JSON log line
      */
     void info(String jsonLine) {
@@ -43,7 +43,7 @@ class CanonicalLogger {
 
     /**
      * Logs a warning message.
-     * 
+     *
      * @param message the warning message
      */
     void warn(String message) {
@@ -52,7 +52,7 @@ class CanonicalLogger {
 
     /**
      * Logs an error message.
-     * 
+     *
      * @param message the error message
      * @param ex      the exception
      */

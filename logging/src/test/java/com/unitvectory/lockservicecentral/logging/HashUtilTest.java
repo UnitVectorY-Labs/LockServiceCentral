@@ -19,7 +19,7 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Unit tests for HashUtil.
- * 
+ *
  * @author Jared Hatfield (UnitVectorY Labs)
  */
 class HashUtilTest {

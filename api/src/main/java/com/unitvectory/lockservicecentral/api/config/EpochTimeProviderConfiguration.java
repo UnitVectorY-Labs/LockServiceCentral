@@ -22,13 +22,18 @@ import com.unitvectory.consistgen.epoch.SystemEpochTimeProvider;
 
 /**
  * The Time Configuration
- * 
+ *
  * @author Jared Hatfield (UnitVectorY Labs)
  */
 @Configuration
 @Profile("!time-disabled")
 public class EpochTimeProviderConfiguration {
 
+    /**
+     * Creates the EpochTimeProvider bean.
+     *
+     * @return the EpochTimeProvider instance
+     */
     @Bean
     public EpochTimeProvider epochTimeProvider() {
         return SystemEpochTimeProvider.getInstance();

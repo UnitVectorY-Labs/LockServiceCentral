@@ -21,7 +21,7 @@ import com.unitvectory.lockservicecentral.logging.CanonicalLogContext;
 
 /**
  * The MemoryLockService test.
- * 
+ *
  * @author Jared Hatfield (UnitVectorY Labs)
  */
 public class MemoryLockServiceTest extends AbstractLockServiceTest {

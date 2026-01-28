@@ -31,12 +31,12 @@ import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * Interceptor that finalizes and emits the canonical log record exactly once.
- * 
+ *
  * <p>
  * In preHandle, captures the route template. In afterCompletion, computes final
  * baseline fields and emits the record.
  * </p>
- * 
+ *
  * @author Jared Hatfield (UnitVectorY Labs)
  */
 @Component
@@ -48,7 +48,7 @@ public class CanonicalEmitInterceptor implements HandlerInterceptor {
 
     /**
      * Constructs a new interceptor.
-     * 
+     *
      * @param contextProvider provides the request-scoped context
      * @param canonicalLogger the canonical logger
      * @param objectMapper    the Jackson object mapper
@@ -120,7 +120,7 @@ public class CanonicalEmitInterceptor implements HandlerInterceptor {
 
     /**
      * Determines the outcome based on status code and exception.
-     * 
+     *
      * @param statusCode the HTTP status code
      * @param ex         the exception, if any
      * @return the outcome string
@@ -146,7 +146,7 @@ public class CanonicalEmitInterceptor implements HandlerInterceptor {
 
     /**
      * Emits the canonical record as a JSON line.
-     * 
+     *
      * @param context the canonical log context
      */
     private void emitRecord(CanonicalLogContext context) {
@@ -161,7 +161,7 @@ public class CanonicalEmitInterceptor implements HandlerInterceptor {
 
     /**
      * Emits a minimal fallback record when normal emission fails.
-     * 
+     *
      * @param cause the cause of the failure
      */
     private void emitFallbackRecord(Exception cause) {

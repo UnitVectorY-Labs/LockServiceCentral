@@ -26,7 +26,7 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
 /**
  * The Configuration for the DynamoDB LockService.
- * 
+ *
  * @author Jared Hatfield (UnitVectorY Labs)
  */
 @Configuration
@@ -38,6 +38,12 @@ public class LockerAwsDynamoDbConfig {
 	@Value("${locker.dynamodb.tableName:locks}")
 	private String tableName;
 
+	/**
+	 * Creates the LockService bean.
+	 *
+	 * @param canonicalLogContextProvider the canonical log context provider
+	 * @return the LockService instance
+	 */
 	@Bean
 	public LockService lockService(ObjectProvider<CanonicalLogContext> canonicalLogContextProvider) {
 		return new DynamoDbLockService(this.dynamoDbClient, this.tableName, canonicalLogContextProvider);

@@ -34,7 +34,7 @@ import software.amazon.awssdk.services.dynamodb.model.GetItemResponse;
 
 /**
  * The DynamoDbLockService test.
- * 
+ *
  * @author Jared Hatfield (UnitVectorY Labs)
  */
 public class DynamoDbLockServiceTest {

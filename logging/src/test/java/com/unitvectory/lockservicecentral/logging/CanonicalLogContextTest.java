@@ -24,7 +24,7 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Unit tests for CanonicalLogContext.
- * 
+ *
  * @author Jared Hatfield (UnitVectorY Labs)
  */
 class CanonicalLogContextTest {

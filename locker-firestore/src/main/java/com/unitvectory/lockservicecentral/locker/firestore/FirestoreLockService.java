@@ -31,7 +31,7 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * The Firestore LockService.
- * 
+ *
  * @author Jared Hatfield (UnitVectorY Labs)
  */
 @Slf4j
@@ -43,7 +43,7 @@ public class FirestoreLockService implements LockService {
 
     /**
      * Constructs a new FirestoreLockService.
-     * 
+     *
      * @param firestore the Firestore client
      * @param collectionLocks the collection name for locks
      * @param canonicalLogContextProvider provider for the canonical log context
@@ -57,7 +57,7 @@ public class FirestoreLockService implements LockService {
 
     /**
      * Records the lock service outcome to the canonical log context.
-     * 
+     *
      * @param outcome the screaming snake case outcome
      */
     private void recordOutcome(String outcome) {

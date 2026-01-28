@@ -25,7 +25,7 @@ import lombok.NoArgsConstructor;
 
 /**
  * The lock.
- * 
+ *
  * @author Jared Hatfield (UnitVectorY Labs)
  */
 @Data
@@ -51,6 +51,11 @@ public class Lock {
 
     private Long expiry;
 
+    /**
+     * Constructs a Lock from a map of properties.
+     *
+     * @param map the map containing lock properties
+     */
     public Lock(Map<String, Object> map) {
         this.namespace = (String) map.get("namespace");
         this.lockName = (String) map.get("lockName");
@@ -60,11 +65,21 @@ public class Lock {
         this.expiry = (Long) map.get("expiry");
     }
 
+    /**
+     * Creates a copy of this Lock.
+     *
+     * @return a new Lock instance with the same values
+     */
     public Lock copy() {
         return new Lock(this.action, this.success, this.namespace, this.lockName, this.owner, this.instanceId,
                 this.leaseDuration, this.expiry);
     }
 
+    /**
+     * Converts this Lock to a map representation.
+     *
+     * @return a map containing the lock properties
+     */
     public Map<String, Object> toMap() {
         Map<String, Object> map = new HashMap<>();
         map.put("namespace", this.namespace);
@@ -76,6 +91,11 @@ public class Lock {
         return map;
     }
 
+    /**
+     * Sets the lock state for a GET operation.
+     *
+     * @param now the current time in epoch seconds
+     */
     public void setGet(long now) {
         this.action = LockAction.GET;
         this.success = null;
@@ -92,6 +112,9 @@ public class Lock {
         }
     }
 
+    /**
+     * Sets the lock state to indicate a failed operation.
+     */
     public void setFailed() {
         this.action = LockAction.FAILED;
         this.success = false;
@@ -101,11 +124,17 @@ public class Lock {
         this.expiry = null;
     }
 
+    /**
+     * Sets the lock state to indicate a successful operation.
+     */
     public void setSuccess() {
         this.action = LockAction.SUCCESS;
         this.success = true;
     }
 
+    /**
+     * Sets the lock state to indicate the lock has been cleared.
+     */
     public void setCleared() {
         this.action = LockAction.SUCCESS;
         this.success = true;
@@ -115,14 +144,32 @@ public class Lock {
         this.expiry = null;
     }
 
+    /**
+     * Checks if the lock is currently active.
+     *
+     * @param now the current time in epoch seconds
+     * @return true if the lock is active, false otherwise
+     */
     public boolean isActive(long now) {
         return this.expiry == null || this.expiry >= now;
     }
 
+    /**
+     * Checks if the lock has expired.
+     *
+     * @param now the current time in epoch seconds
+     * @return true if the lock has expired, false otherwise
+     */
     public boolean isExpired(long now) {
         return this.expiry != null && this.expiry < now;
     }
 
+    /**
+     * Checks if this lock matches the given lock.
+     *
+     * @param lock the lock to compare against
+     * @return true if the locks match, false otherwise
+     */
     public boolean isMatch(Lock lock) {
         if (lock == null) {
             return false;
