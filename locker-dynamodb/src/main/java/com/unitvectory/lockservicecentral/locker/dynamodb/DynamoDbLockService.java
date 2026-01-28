@@ -33,6 +33,7 @@ import software.amazon.awssdk.services.dynamodb.model.GetItemRequest;
 import software.amazon.awssdk.services.dynamodb.model.GetItemResponse;
 import software.amazon.awssdk.services.dynamodb.model.PutItemRequest;
 import software.amazon.awssdk.services.dynamodb.model.ReturnValue;
+import software.amazon.awssdk.services.dynamodb.model.ReturnValuesOnConditionCheckFailure;
 import software.amazon.awssdk.services.dynamodb.model.UpdateItemRequest;
 import software.amazon.awssdk.services.dynamodb.model.UpdateItemResponse;
 
@@ -246,7 +247,7 @@ public class DynamoDbLockService implements LockService {
      * 
      * <p>The condition expression ensures all requirements are met atomically:</p>
      * <ul>
-     *   <li>Lock must exist (implicit in UpdateItem on existing key)</li>
+     *   <li>Lock must exist: attribute_exists(lockId) (explicit condition)</li>
      *   <li>Lock must not be expired: expiry &gt;= :now</li>
      *   <li>Lock must match owner: owner = :owner</li>
      *   <li>Lock must match instanceId: instanceId = :instanceId</li>
@@ -268,6 +269,7 @@ public class DynamoDbLockService implements LockService {
 
         try {
             // Atomic condition: lock exists, is not expired, and matches owner/instance
+            // Note: attribute_exists is required because UpdateItem would otherwise create the item
             String conditionExpression = 
                 "attribute_exists(lockId) AND " +
                 "expiry >= :now AND " +
@@ -301,10 +303,13 @@ public class DynamoDbLockService implements LockService {
             UpdateItemResponse response = dynamoDbClient.updateItem(updateRequest);
             
             // Extract the updated values from the response
-            Lock updatedLock = itemToLock(response.attributes());
-            if (updatedLock != null) {
-                lock.setLeaseDuration(updatedLock.getLeaseDuration());
-                lock.setExpiry(updatedLock.getExpiry());
+            Map<String, AttributeValue> attrs = response.attributes();
+            if (attrs != null && !attrs.isEmpty()) {
+                Lock updatedLock = itemToLock(attrs);
+                if (updatedLock != null) {
+                    lock.setLeaseDuration(updatedLock.getLeaseDuration());
+                    lock.setExpiry(updatedLock.getExpiry());
+                }
             }
             
             lock.setSuccess();
@@ -335,11 +340,14 @@ public class DynamoDbLockService implements LockService {
      * </ul>
      * 
      * <p>Note: Expired locks owned by the same owner/instance can still be released.
-     * If the lock doesn't exist, the delete succeeds (idempotent behavior).
-     * If the lock exists but belongs to a different owner, the condition fails.</p>
+     * If the lock doesn't exist, this is treated as success (already released).
+     * If the lock exists but belongs to a different owner, the operation fails.</p>
+     * 
+     * <p>When the condition fails, we use ReturnValuesOnConditionCheckFailure to get the
+     * existing item's attributes atomically, avoiding a separate read operation.</p>
      * 
      * @param originalLock the lock request containing namespace, lockName, owner, and instanceId
-     * @param now the current timestamp in epoch seconds (not used for expiry check in release)
+     * @param now the current timestamp in epoch seconds (used to check if expired lock belongs to another)
      * @return the lock with cleared values and success/failure status set
      */
     @Override
@@ -366,6 +374,7 @@ public class DynamoDbLockService implements LockService {
                     .conditionExpression(conditionExpression)
                     .expressionAttributeValues(expressionValues)
                     .expressionAttributeNames(expressionNames)
+                    .returnValuesOnConditionCheckFailure(ReturnValuesOnConditionCheckFailure.ALL_OLD)
                     .build();
 
             dynamoDbClient.deleteItem(deleteRequest);
@@ -374,22 +383,26 @@ public class DynamoDbLockService implements LockService {
 
         } catch (ConditionalCheckFailedException e) {
             // Condition failed: could mean lock doesn't exist or belongs to different owner
-            // Check if lock doesn't exist (which is success - already released)
-            Lock existingLock = getLock(lock.getNamespace(), lock.getLockName());
-            if (existingLock == null) {
-                // Lock doesn't exist - treat as success
+            // Check the item from the exception to determine which case
+            Map<String, AttributeValue> item = e.item();
+            
+            if (item == null || item.isEmpty()) {
+                // Lock doesn't exist - treat as success (already released)
                 lock.setCleared();
                 recordOutcome("RELEASED_NOT_FOUND");
-            } else if (existingLock.isExpired(now)) {
-                // Lock exists but is expired and belongs to someone else
-                // Still consider this a success since the lock is effectively released
-                lock.setCleared();
-                recordOutcome("RELEASED_EXPIRED");
             } else {
-                // Lock exists and belongs to different owner
-                log.debug("Conditional check failed for release lock: {}", lock, e);
-                lock.setFailed();
-                recordOutcome("RELEASE_CONFLICT");
+                // Lock exists but belongs to different owner
+                Lock existingLock = itemToLock(item);
+                if (existingLock != null && existingLock.isExpired(now)) {
+                    // Lock is expired, treat as effectively released
+                    lock.setCleared();
+                    recordOutcome("RELEASED_EXPIRED");
+                } else {
+                    // Lock exists and belongs to different owner, and is not expired
+                    log.debug("Conditional check failed for release lock: {}", lock, e);
+                    lock.setFailed();
+                    recordOutcome("RELEASE_CONFLICT");
+                }
             }
 
         } catch (DynamoDbException e) {

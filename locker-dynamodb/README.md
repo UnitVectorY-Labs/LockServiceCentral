@@ -119,9 +119,9 @@ All lock operations use DynamoDB's conditional write operations to ensure fully 
 
 **Key atomicity guarantees:**
 
-- **No read-before-write**: All operations use conditional expressions that handle all edge cases atomically within DynamoDB, rather than reading state first and then writing based on application logic.
+- **Single-operation mutations**: Acquire, renew, and release each complete in a single DynamoDB API call with conditions evaluated atomically.
 - **Expiry checks in conditions**: Lock expiration is evaluated within DynamoDB's condition expressions using the current timestamp, ensuring no time-of-check to time-of-use (TOCTOU) vulnerabilities.
-- **Single-operation mutations**: Acquire, renew, and release each complete in a single DynamoDB API call.
+- **ReturnValuesOnConditionCheckFailure**: For release operations, when the condition fails, the existing item is returned atomically with the exception, avoiding a separate read.
 
 ### Lock Expiry
 
@@ -138,14 +138,14 @@ Lock expiry is handled in two ways:
   - Lock belongs to the same owner/instance (`owner = :owner AND instanceId = :instanceId`)
   
 - **Renew**: Uses a single conditional `UpdateItem` operation that:
-  - Validates the lock exists, is not expired, and matches owner/instance
+  - Validates the lock exists (via `attribute_exists`), is not expired, and matches owner/instance
   - Atomically adds the requested duration to both `leaseDuration` and `expiry`
-  - Returns the updated values
+  - Returns the updated values via `ReturnValues.ALL_NEW`
   
 - **Release**: Uses a single conditional `DeleteItem` operation that:
   - Validates ownership (`owner` and `instanceId` must match)
   - Allows releasing expired locks owned by the same owner
-  - Treats non-existent locks as already released (idempotent)
+  - Uses `ReturnValuesOnConditionCheckFailure.ALL_OLD` to distinguish between non-existent locks (success) and locks owned by others (conflict)
 
 ## Example Configuration
 
