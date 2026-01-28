@@ -229,7 +229,6 @@ public class DynamoDbLockService implements LockService {
 
         } catch (ConditionalCheckFailedException e) {
             // Condition failed: lock exists, is not expired, and belongs to different owner
-            log.debug("Conditional check failed for acquire lock: {}", lock, e);
             lock.setFailed();
             recordOutcome("ACQUIRE_CONFLICT");
 
@@ -317,7 +316,6 @@ public class DynamoDbLockService implements LockService {
 
         } catch (ConditionalCheckFailedException e) {
             // Condition failed: lock doesn't exist, is expired, or belongs to different owner
-            log.debug("Conditional check failed for renew lock: {}", lock, e);
             lock.setFailed();
             recordOutcome("RENEW_CONFLICT");
 
@@ -399,7 +397,6 @@ public class DynamoDbLockService implements LockService {
                     recordOutcome("RELEASED_EXPIRED");
                 } else {
                     // Lock exists and belongs to different owner, and is not expired
-                    log.debug("Conditional check failed for release lock: {}", lock, e);
                     lock.setFailed();
                     recordOutcome("RELEASE_CONFLICT");
                 }
