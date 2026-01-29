@@ -19,12 +19,17 @@ import org.springframework.context.annotation.ComponentScan;
 
 /**
  * The Spring Boot 3 app for the token server
- * 
+ *
  * @author Jared Hatfield (UnitVectorY Labs)
  */
 @SpringBootApplication
 @ComponentScan(basePackages = { "com.unitvectory.lockservicecentral" })
 public class App {
+	/**
+	 * The main entry point for the application.
+	 *
+	 * @param args command-line arguments
+	 */
 	public static void main(String[] args) {
 		SpringApplication.run(App.class, args);
 	}

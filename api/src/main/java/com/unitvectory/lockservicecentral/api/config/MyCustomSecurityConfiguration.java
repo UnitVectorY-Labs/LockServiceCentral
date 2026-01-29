@@ -31,17 +31,17 @@ import org.springframework.security.web.SecurityFilterChain;
 
 /**
  * Security Configuration
- * 
+ *
  * Configures JWT validation based on `jwt.issuer` and `jwt.jwks` settings.
  * If neither is set, no authentication is required.
- * 
+ *
  * If either is set, JWT authentication is required.
  * JWKS is prioritized, but OpenID Connect discovery is used if only the issuer
  * is set.
- * 
+ *
  * If `jwt.issue` is set, the issuer claim is validated.
  * If `jwt.audience` is set, the audience claim is validated.
- * 
+ *
  * @author Jared Hatfield (UnitVectorY Labs)
  */
 @Configuration
@@ -61,6 +61,13 @@ public class MyCustomSecurityConfiguration {
 	@Value("${jwt.audience:#{null}}")
 	private String audience;
 
+	/**
+	 * Creates the SecurityFilterChain bean.
+	 *
+	 * @param http the HttpSecurity to configure
+	 * @return the configured SecurityFilterChain
+	 * @throws Exception if an error occurs during configuration
+	 */
 	@Bean
 	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 		if (this.issuer != null || this.jwks != null) {

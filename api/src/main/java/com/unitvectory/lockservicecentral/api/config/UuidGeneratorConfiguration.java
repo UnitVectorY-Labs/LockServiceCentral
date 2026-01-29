@@ -22,13 +22,18 @@ import com.unitvectory.consistgen.uuid.UuidGenerator;
 
 /**
  * The UUID Generator Configuration
- * 
+ *
  * @author Jared Hatfield (UnitVectorY Labs)
  */
 @Configuration
 @Profile("!uuid-disabled")
 public class UuidGeneratorConfiguration {
 
+    /**
+     * Creates the UuidGenerator bean.
+     *
+     * @return the UuidGenerator instance
+     */
     @Bean
     public UuidGenerator uuidGenerator() {
         return RandomUuidGenerator.getInstance();

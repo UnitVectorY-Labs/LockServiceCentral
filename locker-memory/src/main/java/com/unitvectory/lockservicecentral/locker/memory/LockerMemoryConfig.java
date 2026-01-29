@@ -22,12 +22,18 @@ import com.unitvectory.lockservicecentral.logging.CanonicalLogContext;
 
 /**
  * The Configuration for the Memory LockService.
- * 
+ *
  * @author Jared Hatfield (UnitVectorY Labs)
  */
 @Configuration
 public class LockerMemoryConfig {
 
+	/**
+	 * Creates the LockService bean.
+	 *
+	 * @param canonicalLogContextProvider the canonical log context provider
+	 * @return the LockService instance
+	 */
 	@Bean
 	public LockService lockService(ObjectProvider<CanonicalLogContext> canonicalLogContextProvider) {
 		return new MemoryLockService(canonicalLogContextProvider);

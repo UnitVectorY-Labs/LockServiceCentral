@@ -29,7 +29,7 @@ import java.net.URI;
 
 /**
  * The DynamoDbLockService test with actual DynamoDB server.
- * 
+ *
  * @author Jared Hatfield (UnitVectorY Labs)
  */
 @Disabled
@@ -40,7 +40,7 @@ public class DynamoDbLockServiceActualTest extends AbstractLockServiceTest {
         // These tests are disabled because they require interaction with an actual
         // DynamoDB server (or DynamoDB Local) to run. These are only intended to be used for manual
         // local testing.
-        
+
         // For DynamoDB Local running on localhost:8000
         DynamoDbClient client = DynamoDbClient.builder()
                 .region(Region.US_EAST_1)
@@ -48,7 +48,7 @@ public class DynamoDbLockServiceActualTest extends AbstractLockServiceTest {
                 .credentialsProvider(StaticCredentialsProvider.create(
                         AwsBasicCredentials.create("dummy", "dummy")))
                 .build();
-        
+
         // Use a no-op ObjectProvider for testing
         ObjectProvider<CanonicalLogContext> noOpProvider = new ObjectProvider<>() {
             @Override
@@ -71,7 +71,7 @@ public class DynamoDbLockServiceActualTest extends AbstractLockServiceTest {
                 return new CanonicalLogContext();
             }
         };
-        
+
         return new DynamoDbLockService(client, "locks", noOpProvider);
     }
 

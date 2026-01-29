@@ -22,7 +22,7 @@ import com.unitvectory.lockservicecentral.logging.CanonicalEmitInterceptor;
 
 /**
  * Web MVC configuration to register the canonical emit interceptor.
- * 
+ *
  * @author Jared Hatfield (UnitVectorY Labs)
  */
 @Configuration

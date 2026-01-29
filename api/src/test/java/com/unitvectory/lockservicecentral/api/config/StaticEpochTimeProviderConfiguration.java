@@ -22,7 +22,7 @@ import com.unitvectory.consistgen.epoch.SettableEpochTimeProvider;
 
 /**
  * The Static Time Configuration
- * 
+ *
  * @author Jared Hatfield (UnitVectorY Labs)
  */
 @Configuration

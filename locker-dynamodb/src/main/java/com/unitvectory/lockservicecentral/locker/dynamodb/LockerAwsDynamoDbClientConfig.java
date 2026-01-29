@@ -29,7 +29,7 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClientBuilder;
 
 /**
  * The Configuration for the DynamoDB Client.
- * 
+ *
  * @author Jared Hatfield (UnitVectorY Labs)
  */
 @Configuration
@@ -47,6 +47,11 @@ public class LockerAwsDynamoDbClientConfig {
 	@Value("${locker.dynamodb.secretAccessKey:#{null}}")
 	private String secretAccessKey;
 
+	/**
+	 * Creates the DynamoDbClient bean.
+	 *
+	 * @return the DynamoDbClient instance
+	 */
 	@Bean
 	public DynamoDbClient dynamoDbClient() {
 		DynamoDbClientBuilder builder = DynamoDbClient.builder()

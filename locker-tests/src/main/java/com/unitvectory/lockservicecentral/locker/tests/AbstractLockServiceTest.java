@@ -31,13 +31,18 @@ import com.unitvectory.lockservicecentral.locker.LockService;
 
 /**
  * The set of tests the verify the behavior of a LockService.
- * 
+ *
  * @author Jared Hatfield (UnitVectorY Labs)
  */
 public abstract class AbstractLockServiceTest {
 
     private LockService lockService;
 
+    /**
+     * Creates and returns a LockService instance for testing.
+     *
+     * @return a new LockService instance
+     */
     protected abstract LockService createLockService();
 
     long getNow() {
@@ -62,6 +67,13 @@ public abstract class AbstractLockServiceTest {
         assertEquals(expiry, actual.getExpiry(), "The getLock expiry does not match expected");
     }
 
+    /**
+     * Asserts that an acquire lock operation has failed.
+     *
+     * @param requested the requested lock
+     * @param actual    the actual lock returned
+     * @param now       the current time in epoch seconds
+     */
     public void assertAcquireLockFailed(Lock requested, Lock actual, long now) {
         // This is just testing to make sure the test is valid
         assertNotNull(requested,
@@ -259,6 +271,9 @@ public abstract class AbstractLockServiceTest {
         assertNull(actual.getExpiry(), "After release, expiry should be null");
     }
 
+    /**
+     * Tests that getLock throws NullPointerException for null namespace.
+     */
     @Test
     public void getLockNullNamespaceTest() {
         assertThrows(NullPointerException.class, () -> {
@@ -266,6 +281,9 @@ public abstract class AbstractLockServiceTest {
         });
     }
 
+    /**
+     * Tests that getLock throws NullPointerException for null lockName.
+     */
     @Test
     public void getLockNullLockNameTest() {
         assertThrows(NullPointerException.class, () -> {
@@ -273,6 +291,9 @@ public abstract class AbstractLockServiceTest {
         });
     }
 
+    /**
+     * Tests that acquireLock throws NullPointerException for null lock.
+     */
     @Test
     public void acquireLockNullLockTest() {
         assertThrows(NullPointerException.class, () -> {
@@ -280,6 +301,9 @@ public abstract class AbstractLockServiceTest {
         });
     }
 
+    /**
+     * Tests that renewLock throws NullPointerException for null lock.
+     */
     @Test
     public void renewLockNullLockTest() {
         assertThrows(NullPointerException.class, () -> {
@@ -287,6 +311,9 @@ public abstract class AbstractLockServiceTest {
         });
     }
 
+    /**
+     * Tests that releaseLock throws NullPointerException for null lock.
+     */
     @Test
     public void releaseLockNullLockTest() {
         assertThrows(NullPointerException.class, () -> {
@@ -294,6 +321,9 @@ public abstract class AbstractLockServiceTest {
         });
     }
 
+    /**
+     * Tests that getLock returns null for a non-existent lock.
+     */
     @Test
     public void getLockNotFoundTest() {
         String name = UUID.randomUUID().toString();
@@ -301,6 +331,9 @@ public abstract class AbstractLockServiceTest {
         assertNull(lock, "Non-existent lock should return null");
     }
 
+    /**
+     * Tests that getLock returns the lock when it exists.
+     */
     @Test
     public void getLockExistsTest() {
         // First we need to create a lock
@@ -315,6 +348,9 @@ public abstract class AbstractLockServiceTest {
         assertGetLockMatches(found, "junit", name, "owner", "instance", 60L, now + 60L);
     }
 
+    /**
+     * Tests sequential lock operations: acquire, renew, and release.
+     */
     @Test
     public void sequentialOperationsTest() {
         String name = UUID.randomUUID().toString();
@@ -340,6 +376,9 @@ public abstract class AbstractLockServiceTest {
         assertNull(finalLock, "Released lock should be deleted and return null");
     }
 
+    /**
+     * Tests acquiring a lock with a past timestamp when another lock exists.
+     */
     @Test
     public void acquireLockPastEdgeCaseTest() {
         String name = UUID.randomUUID().toString();
@@ -357,7 +396,9 @@ public abstract class AbstractLockServiceTest {
         assertAcquireLockFailed(acquireLockPast, acquirePast, past);
     }
 
-    // Acquire a lock at the same time as an existing lock
+    /**
+     * Tests acquiring a lock at the same timestamp as an existing lock.
+     */
     @Test
     public void acquireLockSameTimestampTest() {
         String name = UUID.randomUUID().toString();
@@ -375,6 +416,9 @@ public abstract class AbstractLockServiceTest {
         assertAcquireLockFailed(acquireLockSameTime, acquiredSameTime, now);
     }
 
+    /**
+     * Tests acquiring multiple independent locks.
+     */
     @Test
     public void multipleLocksTest() {
         String name1 = UUID.randomUUID().toString();
@@ -399,6 +443,9 @@ public abstract class AbstractLockServiceTest {
         assertGetLockMatches(found2, "junit", name2, "owner2", "instance2", 60L, now + 60);
     }
 
+    /**
+     * Tests acquiring a new lock.
+     */
     @Test
     public void acquireLockNewTest() {
         String name = UUID.randomUUID().toString();
@@ -408,6 +455,9 @@ public abstract class AbstractLockServiceTest {
         assertAcquireLockSuccess(lock, acquired, now);
     }
 
+    /**
+     * Tests that acquiring an existing active lock fails.
+     */
     @Test
     public void acquireLockExistingFailedTest() {
         // First we need to create a lock
@@ -423,6 +473,9 @@ public abstract class AbstractLockServiceTest {
         assertAcquireLockFailed(lock2, acquired2, now);
     }
 
+    /**
+     * Tests acquiring an expired lock succeeds.
+     */
     @Test
     public void acquireLockExistingExpiredTest() {
         // First we need to create a lock
@@ -439,6 +492,9 @@ public abstract class AbstractLockServiceTest {
         assertAcquireLockSuccess(lock2, acquired2, now);
     }
 
+    /**
+     * Tests reacquiring an existing lock by the same owner and instance succeeds.
+     */
     @Test
     public void acquireLockExistingSuccessTest() {
         // First we need to create a lock
@@ -455,6 +511,9 @@ public abstract class AbstractLockServiceTest {
         assertAcquireLockSuccess(lock2, acquired2, now);
     }
 
+    /**
+     * Tests that renewing a non-existent lock fails.
+     */
     @Test
     public void renewLockNotExistsTest() {
         // If we try to renew a lock that does not exist (by generating a random lock
@@ -466,6 +525,9 @@ public abstract class AbstractLockServiceTest {
         assertRenewLockFailed(lock, renewed, now);
     }
 
+    /**
+     * Tests that renewing a lock with mismatched owner fails.
+     */
     @Test
     public void renewLockNotMatchFailedTest() {
         // First we need to create a lock
@@ -482,6 +544,9 @@ public abstract class AbstractLockServiceTest {
         assertRenewLockFailed(lock2, renewed, now);
     }
 
+    /**
+     * Tests that renewing an existing lock succeeds.
+     */
     @Test
     public void renewLockSuccessTest() {
         // First we need to create a lock
@@ -498,6 +563,9 @@ public abstract class AbstractLockServiceTest {
         assertRenewLockSuccess(lock2, renewed, now, 60L, now - 10 + 60);
     }
 
+    /**
+     * Tests that renewing an expired lock fails.
+     */
     @Test
     public void renewLockExpiredFailed() {
         // First we need to create a lock
@@ -514,6 +582,9 @@ public abstract class AbstractLockServiceTest {
         assertRenewLockFailed(lock2, renewed, now);
     }
 
+    /**
+     * Tests that releasing a non-existent lock succeeds.
+     */
     @Test
     public void releaseLockNotExistsTest() {
         // If we try to release a lock that does not exist (by generating a random lock
@@ -525,6 +596,9 @@ public abstract class AbstractLockServiceTest {
         assertReleaseLockSuccess(lock, released);
     }
 
+    /**
+     * Tests that releasing a lock with mismatched owner fails.
+     */
     @Test
     public void releaseLockNotMatchFailedTest() {
         // First we need to create a lock
@@ -541,6 +615,9 @@ public abstract class AbstractLockServiceTest {
         assertReleaseLockFailed(lock2, released);
     }
 
+    /**
+     * Tests that releasing an expired lock succeeds.
+     */
     @Test
     public void releaseLockExpiredTest() {
         // First we need to create a lock
@@ -557,6 +634,9 @@ public abstract class AbstractLockServiceTest {
         assertReleaseLockSuccess(lock2, released);
     }
 
+    /**
+     * Tests that releasing an already released lock succeeds.
+     */
     @Test
     public void releaseAlreadyReleasedLockTest() {
         String name = UUID.randomUUID().toString();
@@ -577,6 +657,9 @@ public abstract class AbstractLockServiceTest {
         assertReleaseLockSuccess(releaseLock, releaseAgain);
     }
 
+    /**
+     * Tests that releasing an existing lock succeeds.
+     */
     @Test
     public void releaseLockSuccess() {
         // First we need to create a lock

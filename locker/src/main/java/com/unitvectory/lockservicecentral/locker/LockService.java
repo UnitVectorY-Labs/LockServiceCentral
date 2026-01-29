@@ -15,14 +15,14 @@ package com.unitvectory.lockservicecentral.locker;
 
 /**
  * The LockService interface.
- * 
+ *
  * @author Jared Hatfield (UnitVectorY Labs)
  */
 public interface LockService {
 
     /**
      * Get a lock.
-     * 
+     *
      * @param namespace the namespace
      * @param lockName  the lock name
      * @return the lock
@@ -31,7 +31,7 @@ public interface LockService {
 
     /**
      * Acquire a lock.
-     * 
+     *
      * @param lock the lock request
      * @param now  the current time
      * @return the lock response
@@ -40,7 +40,7 @@ public interface LockService {
 
     /**
      * Renew a lock.
-     * 
+     *
      * @param lock the lock request
      * @param now  the current time
      * @return the lock response
@@ -49,7 +49,7 @@ public interface LockService {
 
     /**
      * Release a lock.
-     * 
+     *
      * @param lock the lock request
      * @param now  the current time
      * @return the lock response

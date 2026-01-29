@@ -26,7 +26,7 @@ import io.etcd.jetcd.Client;
 
 /**
  * The Configuration for the etcd LockService.
- * 
+ *
  * @author Jared Hatfield (UnitVectorY Labs)
  */
 @Configuration
@@ -44,6 +44,12 @@ public class LockerEtcdConfig {
 	@Value("${locker.etcd.requestTimeoutMs:5000}")
 	private long requestTimeoutMs;
 
+	/**
+	 * Creates the LockService bean.
+	 *
+	 * @param canonicalLogContextProvider the canonical log context provider
+	 * @return the LockService instance
+	 */
 	@Bean
 	public LockService lockService(ObjectProvider<CanonicalLogContext> canonicalLogContextProvider) {
 		return new EtcdLockService(this.etcdClient, this.keyPrefix, this.maxRetries, this.requestTimeoutMs,

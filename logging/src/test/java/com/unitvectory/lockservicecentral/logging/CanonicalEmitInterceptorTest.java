@@ -32,7 +32,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * Unit tests for CanonicalEmitInterceptor.
- * 
+ *
  * @author Jared Hatfield (UnitVectorY Labs)
  */
 class CanonicalEmitInterceptorTest {

@@ -34,13 +34,13 @@ import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * Servlet filter that initializes baseline fields in the canonical log context.
- * 
+ *
  * <p>
  * This filter runs early in the request lifecycle to capture request-start
  * fields
  * such as timestamps, request ID, HTTP method, and target path.
  * </p>
- * 
+ *
  * @author Jared Hatfield (UnitVectorY Labs)
  */
 @Component
@@ -59,7 +59,7 @@ public class CanonicalInitFilter extends OncePerRequestFilter {
 
     /**
      * Constructs a new filter.
-     * 
+     *
      * @param contextProvider      provides the request-scoped context
      * @param appRuntimeProperties application runtime properties
      * @param buildProperties      optional build properties
@@ -128,7 +128,7 @@ public class CanonicalInitFilter extends OncePerRequestFilter {
 
     /**
      * Resolves the client IP address from X-Forwarded-For header or remote address.
-     * 
+     *
      * @param request the HTTP request
      * @return the client IP address
      */

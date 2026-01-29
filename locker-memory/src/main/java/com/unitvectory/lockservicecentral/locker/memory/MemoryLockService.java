@@ -26,7 +26,7 @@ import lombok.Synchronized;
 
 /**
  * The Memory based LockService.
- * 
+ *
  * @author Jared Hatfield (UnitVectorY Labs)
  */
 public class MemoryLockService implements LockService {
@@ -36,7 +36,7 @@ public class MemoryLockService implements LockService {
 
     /**
      * Constructs a new MemoryLockService.
-     * 
+     *
      * @param canonicalLogContextProvider provider for the canonical log context
      */
     public MemoryLockService(ObjectProvider<CanonicalLogContext> canonicalLogContextProvider) {
@@ -45,7 +45,7 @@ public class MemoryLockService implements LockService {
 
     /**
      * Records the lock service outcome to the canonical log context.
-     * 
+     *
      * @param outcome the screaming snake case outcome
      */
     private void recordOutcome(String outcome) {
@@ -83,7 +83,7 @@ public class MemoryLockService implements LockService {
 
     /**
      * Get a lock by namespace and lock name.
-     * 
+     *
      * @param namespace The lock namespace
      * @param lockName  The lock name
      * @return The lock instance or null if it does not exist
@@ -102,7 +102,7 @@ public class MemoryLockService implements LockService {
 
     /**
      * Acquire the lock if it's available.
-     * 
+     *
      * @param lock The lock request
      * @param now  The current timestamp
      * @return The lock response indicating success or failure
@@ -138,7 +138,7 @@ public class MemoryLockService implements LockService {
 
     /**
      * Renew the lock by extending the lease duration.
-     * 
+     *
      * @param lock The lock request
      * @param now  The current timestamp
      * @return The renewed lock or failure if it cannot be renewed
@@ -175,7 +175,7 @@ public class MemoryLockService implements LockService {
 
     /**
      * Release the lock, making it available for others.
-     * 
+     *
      * @param lock The lock request
      * @param now  The current timestamp
      * @return The released lock or failure if it cannot be released
@@ -209,7 +209,7 @@ public class MemoryLockService implements LockService {
 
     /**
      * Generate a unique key for the lock based on namespace and lock name.
-     * 
+     *
      * @param namespace The lock namespace
      * @param lockName  The lock name
      * @return A unique key for the lock

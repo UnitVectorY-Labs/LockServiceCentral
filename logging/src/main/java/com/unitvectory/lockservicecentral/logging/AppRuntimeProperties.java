@@ -20,7 +20,7 @@ import lombok.Data;
 /**
  * Configuration properties for application runtime attributes used in canonical
  * logging.
- * 
+ *
  * @author Jared Hatfield (UnitVectorY Labs)
  */
 @Data

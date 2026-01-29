@@ -33,7 +33,7 @@ import io.etcd.jetcd.kv.GetResponse;
 
 /**
  * The EtcdLockService test with mocks.
- * 
+ *
  * @author Jared Hatfield (UnitVectorY Labs)
  */
 public class EtcdLockServiceTest {

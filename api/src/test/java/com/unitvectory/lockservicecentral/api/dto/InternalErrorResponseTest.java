@@ -19,7 +19,7 @@ import org.junit.jupiter.api.Test;
 
 /**
  * The InternalErrorResponse tests
- * 
+ *
  * @author Jared Hatfield (UnitVectorY Labs)
  */
 public class InternalErrorResponseTest {

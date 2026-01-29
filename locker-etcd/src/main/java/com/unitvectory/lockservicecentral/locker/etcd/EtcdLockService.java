@@ -48,7 +48,7 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * The etcd LockService.
- * 
+ *
  * @author Jared Hatfield (UnitVectorY Labs)
  */
 @Slf4j
@@ -66,7 +66,7 @@ public class EtcdLockService implements LockService {
 
     /**
      * Constructs a new EtcdLockService.
-     * 
+     *
      * @param client the etcd client
      * @param keyPrefix the key prefix for locks
      * @param maxRetries the maximum number of retries
@@ -84,7 +84,7 @@ public class EtcdLockService implements LockService {
 
     /**
      * Records the lock service outcome to the canonical log context.
-     * 
+     *
      * @param outcome the screaming snake case outcome
      */
     private void recordOutcome(String outcome) {
@@ -98,7 +98,7 @@ public class EtcdLockService implements LockService {
 
     /**
      * Generates the etcd key for a lock based on namespace and lock name.
-     * 
+     *
      * @param namespace the namespace
      * @param lockName  the lock name
      * @return the etcd key as ByteSequence
@@ -110,7 +110,7 @@ public class EtcdLockService implements LockService {
 
     /**
      * Serializes a Lock to JSON bytes for storage in etcd.
-     * 
+     *
      * @param lock the lock to serialize
      * @return the JSON bytes
      * @throws JsonProcessingException if serialization fails
@@ -123,7 +123,7 @@ public class EtcdLockService implements LockService {
 
     /**
      * Deserializes a Lock from JSON bytes stored in etcd.
-     * 
+     *
      * @param value the JSON bytes
      * @return the Lock object
      * @throws JsonProcessingException if deserialization fails

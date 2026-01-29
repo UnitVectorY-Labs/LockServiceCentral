@@ -23,7 +23,7 @@ import com.unitvectory.lockservicecentral.logging.CanonicalLogContext;
 
 /**
  * The FirestoreLockService test.
- * 
+ *
  * @author Jared Hatfield (UnitVectorY Labs)
  */
 @Disabled
