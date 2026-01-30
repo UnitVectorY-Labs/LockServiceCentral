@@ -43,12 +43,13 @@ import lombok.extern.slf4j.Slf4j;
  *
  * <h2>Atomicity Guarantees</h2>
  * <ul>
- *   <li><b>Acquire</b>: Single INSERT ... ON CONFLICT DO UPDATE with conditions that succeed
- *       only if the lock doesn't exist, is expired, or belongs to the same owner/instance</li>
- *   <li><b>Renew</b>: Single UPDATE with conditions that succeed only if the lock exists,
- *       is not expired, and matches the owner/instance</li>
- *   <li><b>Release</b>: Single DELETE with conditions that succeed only if the lock
- *       matches the owner/instance</li>
+ *   <li><b>Acquire</b>: Single INSERT ... ON CONFLICT (namespace, lock_name) DO UPDATE with 
+ *       conditions that succeed only if the lock doesn't exist, is expired, or belongs to 
+ *       the same owner/instance</li>
+ *   <li><b>Renew</b>: Single UPDATE with WHERE namespace=? AND lock_name=? plus conditions 
+ *       that succeed only if the lock exists, is not expired, and matches the owner/instance</li>
+ *   <li><b>Release</b>: Single DELETE with WHERE namespace=? AND lock_name=? plus conditions 
+ *       that succeed only if the lock matches the owner/instance</li>
  * </ul>
  *
  * <h2>Lock Expiry Handling</h2>
@@ -155,26 +156,13 @@ public class PostgresLockService implements LockService {
         }
     }
 
-    /**
-     * Generates the database primary key for a lock based on namespace and lock name.
-     *
-     * @param namespace the namespace
-     * @param lockName  the lock name
-     * @return the primary key value
-     */
-    private String generateKey(String namespace, String lockName) {
-        return namespace + ":" + lockName;
-    }
-
     @Override
     public Lock getLock(@NonNull String namespace, @NonNull String lockName) {
-        String key = generateKey(namespace, lockName);
-
         try {
             String sql = "SELECT namespace, lock_name, owner, instance_id, lease_duration, expiry " +
-                    "FROM " + tableName + " WHERE lock_id = ?";
+                    "FROM " + tableName + " WHERE namespace = ? AND lock_name = ?";
 
-            List<Lock> results = jdbcTemplate.query(sql, lockRowMapper, key);
+            List<Lock> results = jdbcTemplate.query(sql, lockRowMapper, namespace, lockName);
 
             if (results.isEmpty()) {
                 return null;
@@ -191,7 +179,6 @@ public class PostgresLockService implements LockService {
     @Override
     public Lock acquireLock(@NonNull Lock originalLock, long now) {
         Lock lock = originalLock.copy();
-        String key = generateKey(lock.getNamespace(), lock.getLockName());
 
         try {
             // Atomic INSERT ... ON CONFLICT DO UPDATE with conditions:
@@ -200,20 +187,20 @@ public class PostgresLockService implements LockService {
             // The WHERE clause in DO UPDATE controls whether the update happens
             // Using Postgres now() for server-side time evaluation
             String sql = "INSERT INTO " + tableName +
-                    " (lock_id, namespace, lock_name, owner, instance_id, lease_duration, expiry) " +
-                    "VALUES (?, ?, ?, ?, ?, ?, ?) " +
-                    "ON CONFLICT (lock_id) DO UPDATE SET " +
+                    " (namespace, lock_name, owner, instance_id, lease_duration, expiry) " +
+                    "VALUES (?, ?, ?, ?, ?, ?) " +
+                    "ON CONFLICT (namespace, lock_name) DO UPDATE SET " +
                     "owner = EXCLUDED.owner, " +
                     "instance_id = EXCLUDED.instance_id, " +
                     "lease_duration = EXCLUDED.lease_duration, " +
                     "expiry = EXCLUDED.expiry " +
                     "WHERE " + tableName + ".expiry < EXTRACT(EPOCH FROM now())::bigint " +
                     "OR (" + tableName + ".owner = EXCLUDED.owner AND " + tableName + ".instance_id = EXCLUDED.instance_id) " +
-                    "RETURNING lock_id";
+                    "RETURNING namespace";
 
             List<String> result = jdbcTemplate.query(sql,
-                    (rs, rowNum) -> rs.getString("lock_id"),
-                    key, lock.getNamespace(), lock.getLockName(), lock.getOwner(),
+                    (rs, rowNum) -> rs.getString("namespace"),
+                    lock.getNamespace(), lock.getLockName(), lock.getOwner(),
                     lock.getInstanceId(), lock.getLeaseDuration(), lock.getExpiry());
 
             if (!result.isEmpty()) {
@@ -238,7 +225,6 @@ public class PostgresLockService implements LockService {
     @Override
     public Lock renewLock(@NonNull Lock originalLock, long now) {
         Lock lock = originalLock.copy();
-        String key = generateKey(lock.getNamespace(), lock.getLockName());
 
         try {
             // Atomic UPDATE with conditions:
@@ -249,7 +235,7 @@ public class PostgresLockService implements LockService {
             String sql = "UPDATE " + tableName + " SET " +
                     "lease_duration = lease_duration + ?, " +
                     "expiry = expiry + ? " +
-                    "WHERE lock_id = ? " +
+                    "WHERE namespace = ? AND lock_name = ? " +
                     "AND expiry >= EXTRACT(EPOCH FROM now())::bigint " +
                     "AND owner = ? " +
                     "AND instance_id = ? " +
@@ -257,7 +243,7 @@ public class PostgresLockService implements LockService {
 
             List<Lock> results = jdbcTemplate.query(sql, lockRowMapper,
                     lock.getLeaseDuration(), lock.getLeaseDuration(),
-                    key, lock.getOwner(), lock.getInstanceId());
+                    lock.getNamespace(), lock.getLockName(), lock.getOwner(), lock.getInstanceId());
 
             if (!results.isEmpty()) {
                 // Lock was renewed successfully
@@ -284,20 +270,19 @@ public class PostgresLockService implements LockService {
     @Override
     public Lock releaseLock(@NonNull Lock originalLock, long now) {
         Lock lock = originalLock.copy();
-        String key = generateKey(lock.getNamespace(), lock.getLockName());
 
         try {
             // First, try to delete with owner/instance match
             // This handles the normal release case
             String deleteSql = "DELETE FROM " + tableName + " " +
-                    "WHERE lock_id = ? " +
+                    "WHERE namespace = ? AND lock_name = ? " +
                     "AND owner = ? " +
                     "AND instance_id = ? " +
-                    "RETURNING lock_id";
+                    "RETURNING namespace";
 
             List<String> deleteResult = jdbcTemplate.query(deleteSql,
-                    (rs, rowNum) -> rs.getString("lock_id"),
-                    key, lock.getOwner(), lock.getInstanceId());
+                    (rs, rowNum) -> rs.getString("namespace"),
+                    lock.getNamespace(), lock.getLockName(), lock.getOwner(), lock.getInstanceId());
 
             if (!deleteResult.isEmpty()) {
                 // Lock was deleted successfully
@@ -306,8 +291,9 @@ public class PostgresLockService implements LockService {
             } else {
                 // Delete didn't match - check if lock exists and why
                 String checkSql = "SELECT namespace, lock_name, owner, instance_id, lease_duration, expiry " +
-                        "FROM " + tableName + " WHERE lock_id = ?";
-                List<Lock> existing = jdbcTemplate.query(checkSql, lockRowMapper, key);
+                        "FROM " + tableName + " WHERE namespace = ? AND lock_name = ?";
+                List<Lock> existing = jdbcTemplate.query(checkSql, lockRowMapper, 
+                        lock.getNamespace(), lock.getLockName());
 
                 if (existing.isEmpty()) {
                     // Lock doesn't exist - treat as success (already released)
