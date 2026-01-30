@@ -30,6 +30,7 @@ The API documentation is available via Swagger UI at the root of the running ser
 | Firestore | `locker-firestore` | Google Cloud Firestore for distributed deployments on GCP |
 | etcd | `locker-etcd` | etcd for distributed deployments using Kubernetes or other etcd-based infrastructure |
 | DynamoDB | `locker-dynamodb` | AWS DynamoDB for distributed deployments on AWS |
+| PostgreSQL | `locker-postgres` | PostgreSQL for distributed deployments using relational databases |
 
 ## Building
 
@@ -47,6 +48,9 @@ mvn clean package -P etcd
 
 # DynamoDB backend
 mvn clean package -P dynamodb
+
+# PostgreSQL backend
+mvn clean package -P postgres
 
 # Build all backends for testing
 mvn clean package -P everything
@@ -68,4 +72,7 @@ docker build --build-arg LOCKER=etcd -t lockservicecentral-etcd .
 
 # DynamoDB backend
 docker build --build-arg LOCKER=dynamodb -t lockservicecentral-dynamodb .
+
+# PostgreSQL backend
+docker build --build-arg LOCKER=postgres -t lockservicecentral-postgres .
 ```

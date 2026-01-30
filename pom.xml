@@ -32,6 +32,7 @@
                 <module>locker-firestore</module>
                 <module>locker-etcd</module>
                 <module>locker-dynamodb</module>
+                <module>locker-postgres</module>
             </modules>
         </profile>
         <!-- Each locker specific profile will build the API with that implementation embedded-->
@@ -54,6 +55,12 @@
             <id>dynamodb</id>
             <modules>
                 <module>locker-dynamodb</module>
+            </modules>
+        </profile>
+        <profile>
+            <id>postgres</id>
+            <modules>
+                <module>locker-postgres</module>
             </modules>
         </profile>
     </profiles>
