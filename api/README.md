@@ -11,11 +11,11 @@ mvn clean package -DskipTests -Pmemory -ntp
 SPRING_PROFILES_ACTIVE=memory AUTHENTICATION_DISABLED=true java -jar ./api/target/api-0.0.1-SNAPSHOT.jar
 ```
 
-Or with Docker:
+Or with Docker (SPRING_PROFILES_ACTIVE is automatically set based on the build):
 
 ```bash
 docker build -t lockservicecentral-memory .
-docker run -p 8080:8080 -e SPRING_PROFILES_ACTIVE=memory -e AUTHENTICATION_DISABLED=true lockservicecentral-memory
+docker run -p 8080:8080 -e AUTHENTICATION_DISABLED=true lockservicecentral-memory
 ```
 
 Once running, access the Swagger UI at [http://localhost:8080/](http://localhost:8080/) to explore and test the API.
@@ -92,8 +92,8 @@ For local development with authentication disabled:
 # Using Java
 SPRING_PROFILES_ACTIVE=memory AUTHENTICATION_DISABLED=true java -jar ./api/target/api-0.0.1-SNAPSHOT.jar
 
-# Using Docker
-docker run -p 8080:8080 -e SPRING_PROFILES_ACTIVE=memory -e AUTHENTICATION_DISABLED=true lockservicecentral-memory
+# Using Docker (SPRING_PROFILES_ACTIVE is automatically set based on the build)
+docker run -p 8080:8080 -e AUTHENTICATION_DISABLED=true lockservicecentral-memory
 ```
 
 For local development with JWT authentication (example using a local issuer):

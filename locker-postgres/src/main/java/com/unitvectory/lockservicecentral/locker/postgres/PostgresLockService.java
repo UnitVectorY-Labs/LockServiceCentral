@@ -142,6 +142,11 @@ public class PostgresLockService implements LockService {
         this.canonicalLogContextProvider = canonicalLogContextProvider;
     }
 
+    @Override
+    public String getBackendName() {
+        return "postgres";
+    }
+
     /**
      * Records the lock service outcome to the canonical log context.
      *

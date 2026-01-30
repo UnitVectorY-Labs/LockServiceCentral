@@ -83,6 +83,11 @@ public class DynamoDbLockService implements LockService {
         this.canonicalLogContextProvider = canonicalLogContextProvider;
     }
 
+    @Override
+    public String getBackendName() {
+        return "dynamodb";
+    }
+
     /**
      * Records the lock service outcome to the canonical log context.
      *

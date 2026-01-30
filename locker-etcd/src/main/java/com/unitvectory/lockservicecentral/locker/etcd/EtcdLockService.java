@@ -82,6 +82,11 @@ public class EtcdLockService implements LockService {
         this.canonicalLogContextProvider = canonicalLogContextProvider;
     }
 
+    @Override
+    public String getBackendName() {
+        return "etcd";
+    }
+
     /**
      * Records the lock service outcome to the canonical log context.
      *

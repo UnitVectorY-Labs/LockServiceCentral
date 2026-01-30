@@ -43,6 +43,11 @@ public class MemoryLockService implements LockService {
         this.canonicalLogContextProvider = canonicalLogContextProvider;
     }
 
+    @Override
+    public String getBackendName() {
+        return "memory";
+    }
+
     /**
      * Records the lock service outcome to the canonical log context.
      *

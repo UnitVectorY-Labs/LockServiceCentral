@@ -21,6 +21,13 @@ package com.unitvectory.lockservicecentral.locker;
 public interface LockService {
 
     /**
+     * Get the name of the backend implementation.
+     *
+     * @return the backend name
+     */
+    String getBackendName();
+
+    /**
      * Get a lock.
      *
      * @param namespace the namespace
