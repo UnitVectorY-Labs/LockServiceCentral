@@ -52,4 +52,9 @@ public class MemoryLockServiceTest extends AbstractLockServiceTest {
         };
         return new MemoryLockService(noOpProvider);
     }
+
+    @Override
+    protected String getExpectedBackendName() {
+        return "memory";
+    }
 }
