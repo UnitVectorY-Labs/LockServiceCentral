@@ -25,6 +25,8 @@ jobs:
             tag: etcd
           - profile: dynamodb
             tag: dynamodb
+          - profile: postgres
+            tag: postgres
 
     steps:
     - name: Checkout code
