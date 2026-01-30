@@ -61,6 +61,13 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class PostgresLockService implements LockService {
 
+    /**
+     * Pattern for valid PostgreSQL table names.
+     * Allows letters, numbers, and underscores, starting with a letter or underscore.
+     */
+    private static final java.util.regex.Pattern VALID_TABLE_NAME_PATTERN = 
+            java.util.regex.Pattern.compile("^[a-zA-Z_][a-zA-Z0-9_]*$");
+
     private final JdbcTemplate jdbcTemplate;
     private final String tableName;
     private final ObjectProvider<CanonicalLogContext> canonicalLogContextProvider;
@@ -83,14 +90,36 @@ public class PostgresLockService implements LockService {
     };
 
     /**
+     * Validates that the table name is a valid PostgreSQL identifier.
+     *
+     * @param tableName the table name to validate
+     * @throws IllegalArgumentException if the table name is invalid
+     */
+    private static void validateTableName(String tableName) {
+        if (tableName == null || tableName.isEmpty()) {
+            throw new IllegalArgumentException("Table name cannot be null or empty");
+        }
+        if (!VALID_TABLE_NAME_PATTERN.matcher(tableName).matches()) {
+            throw new IllegalArgumentException(
+                    "Invalid table name. Table name must start with a letter or underscore " +
+                    "and contain only letters, numbers, and underscores.");
+        }
+        if (tableName.length() > 63) {
+            throw new IllegalArgumentException("Table name cannot exceed 63 characters");
+        }
+    }
+
+    /**
      * Constructs a new PostgresLockService.
      *
      * @param dataSource the DataSource for Postgres connections
      * @param tableName the Postgres table name for locks
      * @param canonicalLogContextProvider provider for the canonical log context
+     * @throws IllegalArgumentException if the table name is invalid
      */
     public PostgresLockService(DataSource dataSource, String tableName,
             ObjectProvider<CanonicalLogContext> canonicalLogContextProvider) {
+        validateTableName(tableName);
         this.jdbcTemplate = new JdbcTemplate(dataSource);
         this.tableName = tableName;
         this.canonicalLogContextProvider = canonicalLogContextProvider;
@@ -102,9 +131,11 @@ public class PostgresLockService implements LockService {
      * @param jdbcTemplate the JdbcTemplate for database operations
      * @param tableName the Postgres table name for locks
      * @param canonicalLogContextProvider provider for the canonical log context
+     * @throws IllegalArgumentException if the table name is invalid
      */
     PostgresLockService(JdbcTemplate jdbcTemplate, String tableName,
             ObjectProvider<CanonicalLogContext> canonicalLogContextProvider) {
+        validateTableName(tableName);
         this.jdbcTemplate = jdbcTemplate;
         this.tableName = tableName;
         this.canonicalLogContextProvider = canonicalLogContextProvider;
