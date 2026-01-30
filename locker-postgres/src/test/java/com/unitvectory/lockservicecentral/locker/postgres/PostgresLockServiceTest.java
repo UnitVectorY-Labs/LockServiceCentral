@@ -14,6 +14,7 @@
 package com.unitvectory.lockservicecentral.locker.postgres;
 
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -36,12 +37,8 @@ import com.unitvectory.lockservicecentral.logging.CanonicalLogContext;
  */
 public class PostgresLockServiceTest {
 
-    @Test
-    @SuppressWarnings("unchecked")
-    public void getLockTest() {
-        JdbcTemplate mockJdbcTemplate = mock(JdbcTemplate.class);
-        // Use a no-op ObjectProvider for testing
-        ObjectProvider<CanonicalLogContext> noOpProvider = new ObjectProvider<>() {
+    private ObjectProvider<CanonicalLogContext> createNoOpProvider() {
+        return new ObjectProvider<>() {
             @Override
             public CanonicalLogContext getObject() {
                 return new CanonicalLogContext();
@@ -62,7 +59,13 @@ public class PostgresLockServiceTest {
                 return new CanonicalLogContext();
             }
         };
-        PostgresLockService service = new PostgresLockService(mockJdbcTemplate, "locks", noOpProvider);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void getLockTest() {
+        JdbcTemplate mockJdbcTemplate = mock(JdbcTemplate.class);
+        PostgresLockService service = new PostgresLockService(mockJdbcTemplate, "locks", createNoOpProvider());
 
         // Mock empty result
         when(mockJdbcTemplate.query(anyString(), any(RowMapper.class), any()))
@@ -73,5 +76,51 @@ public class PostgresLockServiceTest {
 
         // Verify the result
         assertNull(lock);
+    }
+
+    @Test
+    public void invalidTableNameNullTest() {
+        JdbcTemplate mockJdbcTemplate = mock(JdbcTemplate.class);
+        assertThrows(IllegalArgumentException.class, () -> {
+            new PostgresLockService(mockJdbcTemplate, null, createNoOpProvider());
+        });
+    }
+
+    @Test
+    public void invalidTableNameEmptyTest() {
+        JdbcTemplate mockJdbcTemplate = mock(JdbcTemplate.class);
+        assertThrows(IllegalArgumentException.class, () -> {
+            new PostgresLockService(mockJdbcTemplate, "", createNoOpProvider());
+        });
+    }
+
+    @Test
+    public void invalidTableNameSqlInjectionTest() {
+        JdbcTemplate mockJdbcTemplate = mock(JdbcTemplate.class);
+        assertThrows(IllegalArgumentException.class, () -> {
+            new PostgresLockService(mockJdbcTemplate, "locks; DROP TABLE users;", createNoOpProvider());
+        });
+    }
+
+    @Test
+    public void invalidTableNameSpecialCharsTest() {
+        JdbcTemplate mockJdbcTemplate = mock(JdbcTemplate.class);
+        assertThrows(IllegalArgumentException.class, () -> {
+            new PostgresLockService(mockJdbcTemplate, "my-locks", createNoOpProvider());
+        });
+    }
+
+    @Test
+    public void validTableNameWithUnderscoreTest() {
+        JdbcTemplate mockJdbcTemplate = mock(JdbcTemplate.class);
+        // Should not throw
+        new PostgresLockService(mockJdbcTemplate, "my_locks", createNoOpProvider());
+    }
+
+    @Test
+    public void validTableNameStartingWithUnderscoreTest() {
+        JdbcTemplate mockJdbcTemplate = mock(JdbcTemplate.class);
+        // Should not throw
+        new PostgresLockService(mockJdbcTemplate, "_locks", createNoOpProvider());
     }
 }
