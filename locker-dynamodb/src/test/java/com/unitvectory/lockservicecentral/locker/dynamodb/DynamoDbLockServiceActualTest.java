@@ -75,4 +75,9 @@ public class DynamoDbLockServiceActualTest extends AbstractLockServiceTest {
         return new DynamoDbLockService(client, "locks", noOpProvider);
     }
 
+    @Override
+    protected String getExpectedBackendName() {
+        return "dynamodb";
+    }
+
 }
