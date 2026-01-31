@@ -63,4 +63,9 @@ public class EtcdLockServiceActualTest extends AbstractLockServiceTest {
         return new EtcdLockService(client, "locks/", 3, 5000, noOpProvider);
     }
 
+    @Override
+    protected String getExpectedBackendName() {
+        return "etcd";
+    }
+
 }

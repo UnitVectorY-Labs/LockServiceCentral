@@ -55,6 +55,11 @@ public class FirestoreLockService implements LockService {
         this.canonicalLogContextProvider = canonicalLogContextProvider;
     }
 
+    @Override
+    public String getBackendName() {
+        return "firestore";
+    }
+
     /**
      * Records the lock service outcome to the canonical log context.
      *

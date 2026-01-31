@@ -30,6 +30,11 @@ public class MyLockServiceTest extends AbstractLockServiceTest {
     protected LockService createLockService() {
         return new MyLockService();
     }
+
+    @Override
+    protected String getExpectedBackendName() {
+        return "my-backend";
+    }
 }
 ```
 

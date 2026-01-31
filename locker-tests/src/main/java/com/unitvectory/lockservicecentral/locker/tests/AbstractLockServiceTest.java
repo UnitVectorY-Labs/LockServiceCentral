@@ -45,6 +45,13 @@ public abstract class AbstractLockServiceTest {
      */
     protected abstract LockService createLockService();
 
+    /**
+     * Returns the expected backend name for the LockService being tested.
+     *
+     * @return the expected backend name
+     */
+    protected abstract String getExpectedBackendName();
+
     long getNow() {
         return System.currentTimeMillis() / 1000;
     }
@@ -52,6 +59,17 @@ public abstract class AbstractLockServiceTest {
     @BeforeEach
     void setUp() {
         this.lockService = createLockService();
+    }
+
+    /**
+     * Tests that getBackendName returns the expected backend name.
+     */
+    @Test
+    public void getBackendNameTest() {
+        String backendName = this.lockService.getBackendName();
+        assertNotNull(backendName, "getBackendName must return a non-null value");
+        assertFalse(backendName.isEmpty(), "getBackendName must return a non-empty value");
+        assertEquals(getExpectedBackendName(), backendName, "getBackendName must return the expected backend name");
     }
 
     private void assertGetLockMatches(Lock actual, String namespace, String name, String owner, String instanceId,

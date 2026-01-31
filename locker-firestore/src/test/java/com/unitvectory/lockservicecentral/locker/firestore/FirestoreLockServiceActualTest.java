@@ -60,4 +60,9 @@ public class FirestoreLockServiceActualTest extends AbstractLockServiceTest {
                 .build().getService(), "locks", noOpProvider);
     }
 
+    @Override
+    protected String getExpectedBackendName() {
+        return "firestore";
+    }
+
 }

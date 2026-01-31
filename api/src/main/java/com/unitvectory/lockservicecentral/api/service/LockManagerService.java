@@ -15,7 +15,6 @@ package com.unitvectory.lockservicecentral.api.service;
 
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.unitvectory.consistgen.epoch.EpochTimeProvider;
@@ -42,9 +41,6 @@ public class LockManagerService {
 
     @Autowired
     private ObjectProvider<CanonicalLogContext> canonicalLogContextProvider;
-
-    @Value("${lock.backend:memory}")
-    private String lockBackend;
 
     /**
      * Get a lock.
@@ -166,7 +162,7 @@ public class LockManagerService {
     private void enrichCanonicalContext(long backendDurationMs, String lockResult, Long computedExpiry) {
         CanonicalLogContext context = canonicalLogContextProvider.getObject();
 
-        context.put("lock_backend", lockBackend);
+        context.put("lock_backend", lockService.getBackendName());
         context.put("backend_duration_ms", backendDurationMs);
         context.put("lock_result", lockResult);
 
