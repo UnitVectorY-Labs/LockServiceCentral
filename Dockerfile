@@ -18,7 +18,7 @@ RUN mvn clean package -DskipTests -P${LOCKER} -ntp && \
 
 
 # Stage 2: Run the application
-FROM gcr.io/distroless/java17-debian12
+FROM gcr.io/distroless/java17-debian13
 
 # Re-declare the ARG to make it available in this stage
 ARG LOCKER=memory
