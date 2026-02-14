@@ -13,7 +13,7 @@
     <artifactId>locker-postgres</artifactId>
 
     <properties>
-        <postgresql.version>42.7.9</postgresql.version>
+        <postgresql.version>42.7.10</postgresql.version>
         <hikaricp.version>7.0.2</hikaricp.version>
     </properties>
 
