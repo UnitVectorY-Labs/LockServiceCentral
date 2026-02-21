@@ -18,6 +18,9 @@ component_management:
     - component_id: "locker-dynamodb"
       paths:
         - "locker-dynamodb/**"
+    - component_id: "locker-postgres"
+      paths:
+        - "locker-postgres/**"
     - component_id: "logging"
       paths:
         - "logging/**"
