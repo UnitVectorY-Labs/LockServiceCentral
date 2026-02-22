@@ -112,7 +112,6 @@ Run with Docker:
 
 ```bash
 docker run -p 8080:8080 \
-  -e SPRING_PROFILES_ACTIVE=etcd \
   -e LOCKER_ETCD_ENDPOINTS=http://host.docker.internal:2379 \
   -e AUTHENTICATION_DISABLED=true \
   lockservicecentral-etcd

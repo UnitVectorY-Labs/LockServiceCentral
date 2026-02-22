@@ -16,7 +16,6 @@ Or with Docker:
 ```bash
 docker build --build-arg LOCKER=firestore -t lockservicecentral-firestore .
 docker run -p 8080:8080 \
-  -e SPRING_PROFILES_ACTIVE=firestore \
   -e GOOGLE_CLOUD_PROJECT=your-project-id \
   -e AUTHENTICATION_DISABLED=true \
   lockservicecentral-firestore

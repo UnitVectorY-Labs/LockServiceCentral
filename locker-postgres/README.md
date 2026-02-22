@@ -16,7 +16,6 @@ Or with Docker:
 ```bash
 docker build --build-arg LOCKER=postgres -t lockservicecentral-postgres .
 docker run -p 8080:8080 \
-  -e SPRING_PROFILES_ACTIVE=postgres \
   -e LOCKER_POSTGRES_HOST=host.docker.internal \
   -e LOCKER_POSTGRES_PASSWORD=yourpassword \
   -e AUTHENTICATION_DISABLED=true \

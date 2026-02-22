@@ -15,7 +15,7 @@ Or with Docker:
 
 ```bash
 docker build -t lockservicecentral-memory .
-docker run -p 8080:8080 -e SPRING_PROFILES_ACTIVE=memory -e AUTHENTICATION_DISABLED=true lockservicecentral-memory
+docker run -p 8080:8080 -e AUTHENTICATION_DISABLED=true lockservicecentral-memory
 ```
 
 ## Overview
