@@ -64,7 +64,7 @@ jobs:
         echo "PACKAGE_NAME_LC=${PACKAGE_NAME,,}" >> $GITHUB_ENV
 
     - name: Clean up untagged (dangling) docker images
-      uses: actions/delete-package-versions@v5
+      uses: actions/delete-package-versions@e5bc658cc4c965c472efe991f8beea3981499c55 # v5.0.0
       with:
         owner: ${{ github.repository_owner }}
         package-name: ${{ env.PACKAGE_NAME_LC }}-${{ matrix.tag }}-snapshot
