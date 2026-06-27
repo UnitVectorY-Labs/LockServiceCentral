@@ -14,7 +14,7 @@
 
     <properties>
         <postgresql.version>42.7.11</postgresql.version>
-        <hikaricp.version>7.0.2</hikaricp.version>
+        <hikaricp.version>7.1.0</hikaricp.version>
     </properties>
 
     <dependencies>
