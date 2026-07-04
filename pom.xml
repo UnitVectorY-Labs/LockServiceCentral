@@ -72,7 +72,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <jsonschema4springboot.version>0.0.7</jsonschema4springboot.version>
         <spring-cloud-gcp-dependencies.version>8.0.4</spring-cloud-gcp-dependencies.version>
-        <consistgen.version>0.0.9</consistgen.version>
+        <consistgen.version>0.0.10</consistgen.version>
         <fileparamunit.version>0.1.2</fileparamunit.version>
     </properties>
 
