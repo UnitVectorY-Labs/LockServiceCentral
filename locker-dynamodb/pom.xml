@@ -13,7 +13,7 @@
     <artifactId>locker-dynamodb</artifactId>
 
     <properties>
-        <aws.sdk.version>2.46.17</aws.sdk.version>
+        <aws.sdk.version>2.46.21</aws.sdk.version>
     </properties>
 
     <dependencies>
