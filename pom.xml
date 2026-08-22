@@ -73,7 +73,7 @@
         <jsonschema4springboot.version>0.0.7</jsonschema4springboot.version>
         <spring-cloud-gcp-dependencies.version>8.1.0</spring-cloud-gcp-dependencies.version>
         <consistgen.version>0.0.10</consistgen.version>
-        <fileparamunit.version>0.1.2</fileparamunit.version>
+        <fileparamunit.version>0.1.3</fileparamunit.version>
     </properties>
 
     <dependencyManagement>
