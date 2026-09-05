@@ -13,7 +13,7 @@
     <artifactId>locker-etcd</artifactId>
 
     <properties>
-        <jetcd.version>0.8.6</jetcd.version>
+        <jetcd.version>0.8.7</jetcd.version>
     </properties>
 
     <dependencies>
